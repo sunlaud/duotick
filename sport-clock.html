@@ -53,6 +53,7 @@
         .history-table { width: 100%; border-collapse: collapse; }
         .history-table th, .history-table td { font-family: monospace; padding: 6px 0; border-bottom: 1px solid #333; font-size: 0.95rem; text-align: right; }
         .history-table th:first-child, .history-table td:first-child { text-align: left; color: var(--muted); }
+        .history-table th:nth-child(2), .history-table td:nth-child(2) { color: #888; }
     </style>
 </head>
 <body>
@@ -175,13 +176,13 @@
             container.innerHTML = '';
             ['WORK', 'REST'].forEach(function(phase) {
                 const col = document.createElement('div'); col.className = 'history-column';
-                const title = document.createElement('div'); title.className = 'history-title'; title.innerText = phase === 'WORK' ? 'Робота' : 'Відпочинок';
                 const table = document.createElement('table'); table.className = 'history-table';
                 const thead = document.createElement('thead');
                 const headRow = document.createElement('tr');
                 const th1 = document.createElement('th'); th1.innerText = '№';
-                const th2 = document.createElement('th'); th2.innerText = 'Час';
-                headRow.appendChild(th1); headRow.appendChild(th2); thead.appendChild(headRow);
+                const th2 = document.createElement('th'); th2.innerText = 'Заплановано';
+                const th3 = document.createElement('th'); th3.innerText = 'Фактично';
+                headRow.appendChild(th1); headRow.appendChild(th2); headRow.appendChild(th3); thead.appendChild(headRow);
                 const tbody = document.createElement('tbody');
                 let n = 0;
                 history.forEach(function(h) {
@@ -189,11 +190,12 @@
                     n++;
                     const tr = document.createElement('tr');
                     const td1 = document.createElement('td'); td1.innerText = n;
-                    const td2 = document.createElement('td'); td2.innerText = formatTime(h.duration);
-                    tr.appendChild(td1); tr.appendChild(td2); tbody.appendChild(tr);
+                    const td2 = document.createElement('td'); td2.innerText = formatTime(phase === 'WORK' ? config.workDuration : config.restDuration);
+                    const td3 = document.createElement('td'); td3.innerText = formatTime(h.duration);
+                    tr.appendChild(td1); tr.appendChild(td2); tr.appendChild(td3); tbody.appendChild(tr);
                 });
                 table.appendChild(thead); table.appendChild(tbody);
-                col.appendChild(title); col.appendChild(table);
+                col.appendChild(table);
                 container.appendChild(col);
             });
         }
