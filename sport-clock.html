@@ -282,6 +282,13 @@
             loadSettings();
             if (!restoreState()) { state = 'IDLE'; previousState = 'WORK'; timers = { workTotal: 0, workRound: 0, restTotal: 0, restRound: 0 }; currentSignalStep = 0; }
             if (state !== 'IDLE') startTicker(lastUpdateTime);
+            updateGlow();
+            if (state !== 'IDLE') {
+                const se = document.getElementById('status');
+                if (state === 'WORK') { se.innerText = "Іде робота"; se.className = "status-badge work-active"; }
+                else { se.innerText = "Іде відпочинок"; se.className = "status-badge rest-active"; }
+            }
+            updateDisplays();
             renderHistory();
             renderQuickDurations();
             document.getElementById('clocksGrid').addEventListener('click', function(e) {
