@@ -238,7 +238,7 @@
                 if (phase === 'WORK') timers.workRound = 0; else timers.restRound = 0;
                 if (phase === 'WORK') { se.innerText = "Іде робота"; se.className = "status-badge work-active"; }
                 else { se.innerText = "Іде відпочинок"; se.className = "status-badge rest-active"; }
-                addQuickDuration(phase, phase === 'WORK' ? config.workDuration / 1000 : config.restDuration);
+                addQuickDuration(phase, (phase === 'WORK' ? config.workDuration : config.restDuration) / 1000);
                 renderQuickDurations();
                 startTicker();
             } else if (state === 'PAUSED') {
@@ -247,7 +247,7 @@
                 state = phase;
                 if (phase === 'WORK') { se.innerText = "Іде робота"; se.className = "status-badge work-active"; }
                 else { se.innerText = "Іде відпочинок"; se.className = "status-badge rest-active"; }
-                addQuickDuration(phase, phase === 'WORK' ? config.workDuration / 1000 : config.restDuration);
+                addQuickDuration(phase, (phase === 'WORK' ? config.workDuration : config.restDuration) / 1000);
                 renderQuickDurations();
                 startTicker();
             } else if (phase === state) {
@@ -260,7 +260,7 @@
                 if (phase === 'WORK') { se.innerText = "Іде робота"; se.className = "status-badge work-active"; }
                 else { se.innerText = "Іде відпочинок"; se.className = "status-badge rest-active"; }
                 lastUpdateTime = Date.now();
-                addQuickDuration(phase, phase === 'WORK' ? config.workDuration / 1000 : config.restDuration);
+                addQuickDuration(phase, (phase === 'WORK' ? config.workDuration : config.restDuration) / 1000);
                 renderQuickDurations();
                 startTicker();
             }
