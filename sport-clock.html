@@ -97,7 +97,6 @@
             const w = document.getElementById('workDurationInput').value, r = document.getElementById('restDurationInput').value;
             localStorage.setItem('sw_w', w); localStorage.setItem('sw_r', r);
             config.workDuration = (parseInt(w) || 45) * 1000; config.restDuration = (parseInt(r) || 60) * 1000;
-            renderQuickDurations();
             if (state === 'IDLE') updateDisplays();
         }
         function saveSnapshot() {
@@ -240,6 +239,7 @@
                 if (phase === 'WORK') { se.innerText = "Іде робота"; se.className = "status-badge work-active"; }
                 else { se.innerText = "Іде відпочинок"; se.className = "status-badge rest-active"; }
                 addQuickDuration(phase, phase === 'WORK' ? config.workDuration / 1000 : config.restDuration);
+                renderQuickDurations();
                 startTicker();
             } else if (state === 'PAUSED') {
                 const resume = (phase === previousState);
@@ -248,6 +248,7 @@
                 if (phase === 'WORK') { se.innerText = "Іде робота"; se.className = "status-badge work-active"; }
                 else { se.innerText = "Іде відпочинок"; se.className = "status-badge rest-active"; }
                 addQuickDuration(phase, phase === 'WORK' ? config.workDuration / 1000 : config.restDuration);
+                renderQuickDurations();
                 startTicker();
             } else if (phase === state) {
                 playBeep('action'); previousState = state; state = 'PAUSED'; if (intervalId) clearInterval(intervalId);
@@ -260,6 +261,7 @@
                 else { se.innerText = "Іде відпочинок"; se.className = "status-badge rest-active"; }
                 lastUpdateTime = Date.now();
                 addQuickDuration(phase, phase === 'WORK' ? config.workDuration / 1000 : config.restDuration);
+                renderQuickDurations();
                 startTicker();
             }
             updateGlow();
