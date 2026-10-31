@@ -34,7 +34,7 @@
         .time-label { font-size: 0.8rem; color: var(--muted); display: block; margin-bottom: 2px; font-weight: 600; }
         .time-display { font-family: monospace; font-size: 2.8rem; font-weight: bold; letter-spacing: -1px; transition: color 0.6s ease; }
         .time-display.countdown { font-size: 3.2rem; }
-        .time-display.round { font-size: 3.84rem; }
+        .time-display.round { font-size: 4.5rem; }
         .time-display.countdown.elapsed { color: #ff5252 !important; }
         .time-display.total { font-size: 1.8rem; color: #dcdcdc; }
         .clock-card.work .time-display.round, .clock-card.work .time-display.countdown { color: var(--work); }
@@ -66,13 +66,13 @@
         <div class="clocks-grid" id="clocksGrid">
             <div class="clock-card work">
                 <div class="clock-title">💼 РОБОТА</div>
-                <div class="time-group"><span class="time-label">ПОТОЧНИЙ РАУНД</span><div id="work-round" class="time-display round">00:00.0</div></div>
+                <div class="time-group"><div id="work-round" class="time-display round">00:00.0</div></div>
                 <div class="time-group"><span class="time-label">ЗВОРОТНІЙ ВІДЛІК</span><div id="work-countdown" class="time-display countdown">00:45.0</div></div>
                 <div class="time-group"><span class="time-label">ЗАГАЛЬНИЙ ЧАС</span><div id="work-total" class="time-display total">00:00.0</div></div>
             </div>
             <div class="clock-card rest">
                 <div class="clock-title">☕ ВІДПОЧИНОК</div>
-                <div class="time-group"><span class="time-label">ПОТОЧНИЙ РАУНД</span><div id="rest-round" class="time-display round">00:00.0</div></div>
+                <div class="time-group"><div id="rest-round" class="time-display round">00:00.0</div></div>
                 <div class="time-group"><span class="time-label">ЗВОРОТНІЙ ВІДЛІК</span><div id="rest-countdown" class="time-display countdown">01:00.0</div></div>
                 <div class="time-group"><span class="time-label">ЗАГАЛЬНИЙ ЧАС</span><div id="rest-total" class="time-display total">00:00.0</div></div>
             </div>
