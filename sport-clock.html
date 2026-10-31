@@ -29,7 +29,6 @@
         .clock-card.glow-static { animation: none; }
         .clock-card.glow-static.glow-work { box-shadow: 0 0 18px 4px rgba(76, 175, 80, 0.7), 0 6px 15px rgba(0,0,0,0.4); }
         .clock-card.glow-static.glow-rest { box-shadow: 0 0 18px 4px rgba(33, 150, 246, 0.7), 0 6px 15px rgba(0,0,0,0.4); }
-        .clock-card.inactive .time-display.round, .clock-card.inactive .time-display.countdown, .clock-card.inactive .time-display.total { color: #888; }
         .clock-title { font-size: 1.2rem; text-transform: uppercase; margin-bottom: 15px; font-weight: 800; }
         .time-group { margin-bottom: 15px; }
         .time-label { font-size: 0.8rem; color: var(--muted); display: block; margin-bottom: 2px; font-weight: 600; }
@@ -40,6 +39,7 @@
         .time-display.total { font-size: 1.8rem; color: #dcdcdc; }
         .clock-card.work .time-display.round, .clock-card.work .time-display.countdown { color: var(--work); }
         .clock-card.rest .time-display.round, .clock-card.rest .time-display.countdown { color: var(--rest); }
+        .clock-card.inactive .time-display.round, .clock-card.inactive .time-display.countdown, .clock-card.inactive .time-display.total { color: #888; }
         .controls { display: flex; flex-direction: column; gap: 15px; }
         button { font-size: 1.4rem; font-weight: bold; padding: 20px; border: none; border-radius: 50px; cursor: pointer; user-select: none; transition: background 0.2s, transform 0.1s; }
         button:active { transform: scale(0.97); }
@@ -152,7 +152,7 @@
                 const phase = state === 'PAUSED' ? previousState : state;
                 const isCurrent = card.classList.contains(phase === 'WORK' ? 'work' : 'rest');
                 if (isCurrent) {
-                    if (state === 'PAUSED') card.classList.add('glow-static');
+                    if (state === 'PAUSED') { card.classList.add('glow-static'); card.classList.add(phase === 'WORK' ? 'glow-work' : 'glow-rest'); }
                     else card.classList.add(phase === 'WORK' ? 'glow-work' : 'glow-rest');
                 } else {
                     card.classList.add('inactive');
