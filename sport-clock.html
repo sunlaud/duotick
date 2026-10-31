@@ -174,7 +174,8 @@
         function addQuickDuration(phase, seconds) {
             const list = quickDurations[phase] || (quickDurations[phase] = []);
             const idx = list.indexOf(seconds);
-            if (idx === -1) list.unshift(seconds); else list.splice(idx, 1);
+            if (idx !== -1) { list.splice(idx, 1); list.unshift(seconds); }
+            else { if (list.length >= 3) list.pop(); list.unshift(seconds); }
             return list;
         }
         function applyQuickDuration(phase, seconds) {
@@ -242,6 +243,7 @@
                 if (phase === 'WORK') timers.workRound = 0; else timers.restRound = 0;
                 if (phase === 'WORK') { se.innerText = "Іде робота"; se.className = "status-badge work-active"; }
                 else { se.innerText = "Іде відпочинок"; se.className = "status-badge rest-active"; }
+                addQuickDuration(phase, phase === 'WORK' ? config.workDuration / 1000 : config.restDuration);
                 startTicker();
             } else if (state === 'PAUSED') {
                 const resume = (phase === previousState);
@@ -249,6 +251,7 @@
                 state = phase;
                 if (phase === 'WORK') { se.innerText = "Іде робота"; se.className = "status-badge work-active"; }
                 else { se.innerText = "Іде відпочинок"; se.className = "status-badge rest-active"; }
+                addQuickDuration(phase, phase === 'WORK' ? config.workDuration / 1000 : config.restDuration);
                 startTicker();
             } else if (phase === state) {
                 playBeep('action'); previousState = state; state = 'PAUSED'; if (intervalId) clearInterval(intervalId);
@@ -260,6 +263,7 @@
                 if (phase === 'WORK') { se.innerText = "Іде робота"; se.className = "status-badge work-active"; }
                 else { se.innerText = "Іде відпочинок"; se.className = "status-badge rest-active"; }
                 lastUpdateTime = Date.now();
+                addQuickDuration(phase, phase === 'WORK' ? config.workDuration / 1000 : config.restDuration);
                 startTicker();
             }
             updateGlow();
