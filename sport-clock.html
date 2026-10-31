@@ -86,6 +86,19 @@
             config.workDuration = (parseInt(w) || 45) * 1000; config.restDuration = (parseInt(r) || 60) * 1000;
             if (state === 'IDLE') updateDisplays();
         }
+        function saveSnapshot() {
+            try { localStorage.setItem('sw_state', JSON.stringify({ state: state, previousState: previousState, timers: timers, currentSignalStep: currentSignalStep, lastUpdateTime: lastUpdateTime })); } catch (e) { /* storage full/blocked */ }
+        }
+        function restoreState() {
+            try {
+                const s = JSON.parse(localStorage.getItem('sw_state'));
+                if (s && (s.state === 'WORK' || s.state === 'REST' || s.state === 'PAUSED')) {
+                    state = s.state; previousState = s.previousState || 'WORK'; timers = s.timers || { workTotal: 0, workRound: 0, restTotal: 0, restRound: 0 }; currentSignalStep = s.currentSignalStep || 0; lastUpdateTime = s.lastUpdateTime || Date.now();
+                    return true;
+                }
+            } catch (e) { /* corrupted snapshot -> fall through to fresh start */ }
+            return false;
+        }
         function playBeep(type) {
             try {
                 if (!audioCtx) audioCtx = new (window.AudioContext || window.webkitAudioContext)();
@@ -128,7 +141,7 @@
             }
             updateDisplays();
         }
-        function startTicker() { if (intervalId) clearInterval(intervalId); lastUpdateTime = Date.now(); intervalId = setInterval(tick, 100); }
+        function startTicker(since) { if (intervalId) clearInterval(intervalId); lastUpdateTime = since || Date.now(); intervalId = setInterval(tick, 100); }
         function updateGlow() {
             document.querySelectorAll('.clock-card').forEach(card => {
                 card.classList.remove('glow-work', 'glow-rest');
@@ -167,11 +180,14 @@
             if (intervalId) clearInterval(intervalId); intervalId = null; state = 'IDLE'; previousState = 'WORK'; currentSignalStep = 0;
             timers = { workTotal: 0, workRound: 0, restTotal: 0, restRound: 0 };
             const se = document.getElementById('status'); se.innerText = "Готово до старту"; se.className = "status-badge";
+            saveSnapshot();
             updateGlow();
             updateDisplays();
         }
         document.addEventListener("DOMContentLoaded", function() {
             loadSettings();
+            if (!restoreState()) { state = 'IDLE'; previousState = 'WORK'; timers = { workTotal: 0, workRound: 0, restTotal: 0, restRound: 0 }; currentSignalStep = 0; }
+            if (state !== 'IDLE') startTicker(lastUpdateTime);
             document.getElementById('clocksGrid').addEventListener('click', function(e) {
                 const card = e.target.closest ? e.target.closest('.clock-card') : null;
                 if (!card) return;
@@ -181,6 +197,8 @@
             document.getElementById('resetBtn').addEventListener('click', handleReset);
             document.getElementById('workDurationInput').addEventListener('input', saveSettings);
             document.getElementById('restDurationInput').addEventListener('input', saveSettings);
+            document.addEventListener('visibilitychange', function() { if (document.visibilityState === 'hidden') saveSnapshot(); });
+            window.addEventListener('pagehide', saveSnapshot);
             document.addEventListener('keyup', function(e) { if (e.code === 'Space' || e.keyCode === 32) { if (e.target.tagName === 'INPUT') return; let phase = state; if (phase === 'PAUSED') phase = previousState; handleAction(phase); } });
         });
     </script>
