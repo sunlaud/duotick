@@ -62,15 +62,15 @@
         <div class="clocks-grid" id="clocksGrid">
             <div class="clock-card work">
                 <div class="clock-title">💼 РОБОТА</div>
+                <div class="setting-group"><input type="number" id="workDurationInput" min="1" value="45"></div>
                 <div class="time-group"><div id="work-round" class="time-display round">00:00.0</div></div>
-                <div class="setting-group"><label for="workDurationInput">⏱️ РОБОТА (сек)</label><input type="number" id="workDurationInput" min="1" value="45"></div>
                 <div class="time-group"><span class="time-label">ЗВОРОТНІЙ ВІДЛІК</span><div id="work-countdown" class="time-display countdown">00:45.0</div></div>
                 <div class="time-group"><span class="time-label">ЗАГАЛЬНИЙ ЧАС</span><div id="work-total" class="time-display total">00:00.0</div></div>
             </div>
             <div class="clock-card rest">
                 <div class="clock-title">☕ ВІДПОЧИНОК</div>
+                <div class="setting-group"><input type="number" id="restDurationInput" min="1" value="60"></div>
                 <div class="time-group"><div id="rest-round" class="time-display round">00:00.0</div></div>
-                <div class="setting-group"><label for="restDurationInput">⏱️ ВІДПОЧИНОК (сек)</label><input type="number" id="restDurationInput" min="1" value="60"></div>
                 <div class="time-group"><span class="time-label">ЗВОРОТНІЙ ВІДЛІК</span><div id="rest-countdown" class="time-display countdown">01:00.0</div></div>
                 <div class="time-group"><span class="time-label">ЗАГАЛЬНИЙ ЧАС</span><div id="rest-total" class="time-display total">00:00.0</div></div>
             </div>
@@ -244,6 +244,7 @@
             if (state !== 'IDLE') startTicker(lastUpdateTime);
             renderHistory();
             document.getElementById('clocksGrid').addEventListener('click', function(e) {
+                if (e.target.closest && e.target.closest('input, button, a, select, textarea')) return;
                 const card = e.target.closest ? e.target.closest('.clock-card') : null;
                 if (!card) return;
                 handleAction(card.classList.contains('work') ? 'WORK' : 'REST');
