@@ -99,6 +99,7 @@
             config.workDuration = (parseInt(w) || 45) * 1000; config.restDuration = (parseInt(r) || 60) * 1000;
             if (document.getElementById('workDurationInput').value) addQuickDuration('WORK', parseInt(document.getElementById('workDurationInput').value));
             if (document.getElementById('restDurationInput').value) addQuickDuration('REST', parseInt(document.getElementById('restDurationInput').value));
+            renderQuickDurations();
             if (state === 'IDLE') updateDisplays();
         }
         function saveSnapshot() {
@@ -180,6 +181,7 @@
             if (phase === 'WORK') { config.workDuration = seconds * 1000; document.getElementById('workDurationInput').value = seconds; }
             else { config.restDuration = seconds * 1000; document.getElementById('restDurationInput').value = seconds; }
             addQuickDuration(phase, seconds);
+            renderQuickDurations();
             if (state === 'IDLE') updateDisplays();
         }
         function renderQuickDurations() {
