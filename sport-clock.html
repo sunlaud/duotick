@@ -45,6 +45,7 @@
         button:active { transform: scale(0.97); }
         .secondary-btns { display: grid; grid-template-columns: 1fr; gap: 15px; }
         #resetBtn { background: #2a1414; color: #ff5252; font-size: 1.1rem; padding: 15px; border: 1px solid #5c1d1d; }
+        .preset-btn { background: #333; color: #aaa; border: 1px solid #444; border-radius: 14px; padding: 4px 10px; font-size: 0.85rem; font-weight: bold; cursor: pointer; }
         .history { background: var(--card); border-radius: 16px; padding: 15px; margin-bottom: 25px; text-align: left; display: grid; grid-template-columns: 1fr 1fr; gap: 20px; }
         @media (max-width: 479px) { .history { grid-template-columns: 1fr; } }
         .history-title { font-size: 1rem; text-transform: uppercase; font-weight: 800; color: var(--muted); margin-bottom: 10px; }
@@ -84,6 +85,7 @@
         let state = 'IDLE', previousState = 'WORK';
         let timers = { workTotal: 0, workRound: 0, restTotal: 0, restRound: 0 };
         let history = [];
+        let quickDurations = { WORK: [45, 60, 120], REST: [45, 60, 120] };
         let lastUpdateTime = 0, intervalId = null, audioCtx = null;
         let config = { workDuration: 45000, restDuration: 60000 }, currentSignalStep = 0;
         function loadSettings() {
@@ -95,6 +97,8 @@
             const w = document.getElementById('workDurationInput').value, r = document.getElementById('restDurationInput').value;
             localStorage.setItem('sw_w', w); localStorage.setItem('sw_r', r);
             config.workDuration = (parseInt(w) || 45) * 1000; config.restDuration = (parseInt(r) || 60) * 1000;
+            if (document.getElementById('workDurationInput').value) addQuickDuration('WORK', parseInt(document.getElementById('workDurationInput').value));
+            if (document.getElementById('restDurationInput').value) addQuickDuration('REST', parseInt(document.getElementById('restDurationInput').value));
             if (state === 'IDLE') updateDisplays();
         }
         function saveSnapshot() {
@@ -164,6 +168,38 @@
                 } else {
                     card.classList.add('inactive');
                 }
+            });
+        }
+        function addQuickDuration(phase, seconds) {
+            const list = quickDurations[phase] || (quickDurations[phase] = []);
+            const idx = list.indexOf(seconds);
+            if (idx === -1) list.unshift(seconds); else list.splice(idx, 1);
+            return list;
+        }
+        function applyQuickDuration(phase, seconds) {
+            if (phase === 'WORK') { config.workDuration = seconds * 1000; document.getElementById('workDurationInput').value = seconds; }
+            else { config.restDuration = seconds * 1000; document.getElementById('restDurationInput').value = seconds; }
+            addQuickDuration(phase, seconds);
+            if (state === 'IDLE') updateDisplays();
+        }
+        function renderQuickDurations() {
+            ['WORK', 'REST'].forEach(function(phase) {
+                const card = phase === 'WORK' ? document.querySelector('.clock-card.work') : document.querySelector('.clock-card.rest');
+                const group = card ? card.querySelector('.setting-group') : null;
+                if (!group) return;
+                group.innerHTML = '';
+                quickDurations[phase].forEach(function(seconds) {
+                    const btn = document.createElement('button');
+                    btn.type = 'button';
+                    btn.className = 'preset-btn';
+                    btn.dataset.phase = phase;
+                    btn.dataset.value = seconds;
+                    btn.innerText = seconds;
+                    btn.addEventListener('click', function() { applyQuickDuration(phase, seconds); });
+                    group.appendChild(btn);
+                });
+                const input = document.getElementById(phase === 'WORK' ? 'workDurationInput' : 'restDurationInput');
+                if (input) { group.appendChild(input); const s = document.createElement('span'); s.innerText = 'сек'; group.appendChild(s); }
             });
         }
         function renderHistory() {
@@ -241,6 +277,7 @@
             if (!restoreState()) { state = 'IDLE'; previousState = 'WORK'; timers = { workTotal: 0, workRound: 0, restTotal: 0, restRound: 0 }; currentSignalStep = 0; }
             if (state !== 'IDLE') startTicker(lastUpdateTime);
             renderHistory();
+            renderQuickDurations();
             document.getElementById('clocksGrid').addEventListener('click', function(e) {
                 if (e.target.closest && e.target.closest('input, button, a, select, textarea')) return;
                 const card = e.target.closest ? e.target.closest('.clock-card') : null;
