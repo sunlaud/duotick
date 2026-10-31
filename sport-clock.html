@@ -187,7 +187,7 @@
                 const card = phase === 'WORK' ? document.querySelector('.clock-card.work') : document.querySelector('.clock-card.rest');
                 const group = card ? card.querySelector('.setting-group') : null;
                 if (!group) return;
-                group.innerHTML = '';
+                group.querySelectorAll('.preset-btn').forEach(function(btn) { btn.remove(); });
                 quickDurations[phase].forEach(function(seconds) {
                     const btn = document.createElement('button');
                     btn.type = 'button';
@@ -198,8 +198,10 @@
                     btn.addEventListener('click', function() { applyQuickDuration(phase, seconds); });
                     group.appendChild(btn);
                 });
-                const input = document.getElementById(phase === 'WORK' ? 'workDurationInput' : 'restDurationInput');
-                if (input) { group.appendChild(input); const s = document.createElement('span'); s.innerText = 'сек'; group.appendChild(s); }
+                if (!group.querySelector('input')) {
+                    const input = document.getElementById(phase === 'WORK' ? 'workDurationInput' : 'restDurationInput');
+                    if (input) { group.appendChild(input); const s = document.createElement('span'); s.innerText = 'сек'; group.appendChild(s); }
+                }
             });
         }
         function renderHistory() {
