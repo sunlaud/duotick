@@ -100,13 +100,13 @@
             if (state === 'IDLE') updateDisplays();
         }
         function saveSnapshot() {
-            try { localStorage.setItem('sw_state', JSON.stringify({ state: state, previousState: previousState, timers: timers, currentSignalStep: currentSignalStep, lastUpdateTime: lastUpdateTime, history: history })); } catch (e) { /* storage full/blocked */ }
+            try { localStorage.setItem('sw_state', JSON.stringify({ state: state, previousState: previousState, timers: timers, currentSignalStep: currentSignalStep, lastUpdateTime: lastUpdateTime, history: history, quickDurations: quickDurations })); } catch (e) { /* storage full/blocked */ }
         }
         function restoreState() {
             try {
                 const s = JSON.parse(localStorage.getItem('sw_state'));
                 if (s && (s.state === 'WORK' || s.state === 'REST' || s.state === 'PAUSED')) {
-                    state = s.state; previousState = s.previousState || 'WORK'; timers = s.timers || { workTotal: 0, workRound: 0, restTotal: 0, restRound: 0 }; currentSignalStep = s.currentSignalStep || 0; lastUpdateTime = s.lastUpdateTime || Date.now(); history = s.history || [];
+                    state = s.state; previousState = s.previousState || 'WORK'; timers = s.timers || { workTotal: 0, workRound: 0, restTotal: 0, restRound: 0 }; currentSignalStep = s.currentSignalStep || 0; lastUpdateTime = s.lastUpdateTime || Date.now(); history = s.history || []; quickDurations = s.quickDurations || { WORK: [45, 60, 120], REST: [45, 60, 120] };
                     return true;
                 }
             } catch (e) { /* corrupted snapshot -> fall through to fresh start */ }
@@ -189,7 +189,7 @@
                 if (!group) return;
                 const input = document.getElementById(phase === 'WORK' ? 'workDurationInput' : 'restDurationInput');
                 group.innerHTML = '';
-                quickDurations[phase].forEach(function(seconds) {
+                quickDurations[phase].slice().sort((a, b) => a - b).forEach(function(seconds) {
                     const btn = document.createElement('button');
                     btn.type = 'button';
                     btn.className = 'preset-btn';
