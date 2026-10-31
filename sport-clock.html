@@ -45,6 +45,10 @@
         button:active { transform: scale(0.97); }
         .secondary-btns { display: grid; grid-template-columns: 1fr; gap: 15px; }
         #resetBtn { background: #2a1414; color: #ff5252; font-size: 1.1rem; padding: 15px; border: 1px solid #5c1d1d; }
+        .history { background: var(--card); border-radius: 16px; padding: 15px; margin-bottom: 25px; text-align: left; }
+        .history-title { font-size: 1rem; text-transform: uppercase; font-weight: 800; color: var(--muted); margin-bottom: 10px; }
+        .history-list { list-style: none; margin: 0; padding: 0; }
+        .history-item { font-family: monospace; color: var(--text); padding: 6px 0; border-bottom: 1px solid #333; font-size: 1rem; }
     </style>
 </head>
 <body>
@@ -68,6 +72,7 @@
                 <div class="time-group"><span class="time-label">ЗАГАЛЬНИЙ ЧАС</span><div id="rest-total" class="time-display total">00:00.0</div></div>
             </div>
         </div>
+        <div class="history" id="history"></div>
         <div class="controls">
             <div class="secondary-btns"><button id="resetBtn">Скинути все</button></div>
         </div>
@@ -77,6 +82,7 @@
     <script>
         let state = 'IDLE', previousState = 'WORK';
         let timers = { workTotal: 0, workRound: 0, restTotal: 0, restRound: 0 };
+        let history = [];
         let lastUpdateTime = 0, intervalId = null, audioCtx = null;
         let config = { workDuration: 45000, restDuration: 60000 }, currentSignalStep = 0;
         function loadSettings() {
@@ -91,13 +97,13 @@
             if (state === 'IDLE') updateDisplays();
         }
         function saveSnapshot() {
-            try { localStorage.setItem('sw_state', JSON.stringify({ state: state, previousState: previousState, timers: timers, currentSignalStep: currentSignalStep, lastUpdateTime: lastUpdateTime })); } catch (e) { /* storage full/blocked */ }
+            try { localStorage.setItem('sw_state', JSON.stringify({ state: state, previousState: previousState, timers: timers, currentSignalStep: currentSignalStep, lastUpdateTime: lastUpdateTime, history: history })); } catch (e) { /* storage full/blocked */ }
         }
         function restoreState() {
             try {
                 const s = JSON.parse(localStorage.getItem('sw_state'));
                 if (s && (s.state === 'WORK' || s.state === 'REST' || s.state === 'PAUSED')) {
-                    state = s.state; previousState = s.previousState || 'WORK'; timers = s.timers || { workTotal: 0, workRound: 0, restTotal: 0, restRound: 0 }; currentSignalStep = s.currentSignalStep || 0; lastUpdateTime = s.lastUpdateTime || Date.now();
+                    state = s.state; previousState = s.previousState || 'WORK'; timers = s.timers || { workTotal: 0, workRound: 0, restTotal: 0, restRound: 0 }; currentSignalStep = s.currentSignalStep || 0; lastUpdateTime = s.lastUpdateTime || Date.now(); history = s.history || [];
                     return true;
                 }
             } catch (e) { /* corrupted snapshot -> fall through to fresh start */ }
@@ -159,6 +165,14 @@
                 }
             });
         }
+        function renderHistory() {
+            const container = document.getElementById('history');
+            if (!container) return;
+            container.innerHTML = '';
+            const title = document.createElement('div'); title.className = 'history-title'; title.innerText = "ІСТОРІЯ РАУНДІВ"; container.appendChild(title);
+            const list = document.createElement('ul'); list.className = 'history-list'; container.appendChild(list);
+            history.forEach(function(h, i) { const li = document.createElement('li'); li.className = 'history-item'; li.innerText = `${h.phase === 'WORK' ? 'Робота' : 'Відпочинок'} #${i + 1}: ${formatTime(h.duration)}`; list.appendChild(li); });
+        }
         function handleAction(phase) {
             playBeep('action'); const se = document.getElementById('status');
             if (state === 'IDLE') {
@@ -178,6 +192,7 @@
                 playBeep('action'); previousState = state; state = 'PAUSED'; if (intervalId) clearInterval(intervalId);
                 se.innerText = "Пауза"; se.className = "status-badge paused";
             } else {
+                history.push({ phase: state, duration: state === 'WORK' ? timers.workRound : timers.restRound });
                 state = phase; if (phase === 'WORK') timers.workRound = 0; else timers.restRound = 0;
                 currentSignalStep = 0;
                 if (phase === 'WORK') { se.innerText = "Іде робота"; se.className = "status-badge work-active"; }
@@ -191,8 +206,10 @@
         function handleReset() {
             if (intervalId) clearInterval(intervalId); intervalId = null; state = 'IDLE'; previousState = 'WORK'; currentSignalStep = 0;
             timers = { workTotal: 0, workRound: 0, restTotal: 0, restRound: 0 };
+            history = [];
             const se = document.getElementById('status'); se.innerText = "Готово до старту"; se.className = "status-badge";
             saveSnapshot();
+            renderHistory();
             updateGlow();
             updateDisplays();
         }
@@ -200,6 +217,7 @@
             loadSettings();
             if (!restoreState()) { state = 'IDLE'; previousState = 'WORK'; timers = { workTotal: 0, workRound: 0, restTotal: 0, restRound: 0 }; currentSignalStep = 0; }
             if (state !== 'IDLE') startTicker(lastUpdateTime);
+            renderHistory();
             document.getElementById('clocksGrid').addEventListener('click', function(e) {
                 const card = e.target.closest ? e.target.closest('.clock-card') : null;
                 if (!card) return;
