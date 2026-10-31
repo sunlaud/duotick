@@ -18,9 +18,14 @@
         .setting-group input { width: 80px; background: #333; border: 1px solid #444; color: #fff; padding: 8px; border-radius: 8px; text-align: center; font-size: 1.1rem; font-weight: bold; }
         .clocks-grid { display: grid; grid-template-columns: 1fr; gap: 20px; margin-bottom: 25px; }
         @media (min-width: 480px) { .clocks-grid { grid-template-columns: 1fr 1fr; } }
-        .clock-card { background: var(--card); border-radius: 20px; padding: 20px 15px; box-shadow: 0 6px 15px rgba(0,0,0,0.4); border-top: 6px solid #333; }
+        .clock-card { background: var(--card); border-radius: 20px; padding: 20px 15px; box-shadow: 0 6px 15px rgba(0,0,0,0.4); border-top: 6px solid #333; transition: border-top-color 0.3s ease, box-shadow 0.3s ease; }
         .clock-card.work { border-top-color: var(--work); }
         .clock-card.rest { border-top-color: var(--rest); }
+        .clocks-grid { cursor: pointer; }
+        @keyframes glowWork { 0%, 100% { box-shadow: 0 0 10px 2px rgba(76, 175, 80, 0.45), 0 6px 15px rgba(0,0,0,0.4); } 50% { box-shadow: 0 0 40px 8px rgba(76, 175, 80, 0.95), 0 6px 15px rgba(0,0,0,0.4); } }
+        @keyframes glowRest { 0%, 100% { box-shadow: 0 0 10px 2px rgba(33, 150, 246, 0.45), 0 6px 15px rgba(0,0,0,0.4); } 50% { box-shadow: 0 0 40px 8px rgba(33, 150, 246, 0.95), 0 6px 15px rgba(0,0,0,0.4); } }
+        .clock-card.glow-work { animation: glowWork 2s ease-in-out infinite; }
+        .clock-card.glow-rest { animation: glowRest 2s ease-in-out infinite; }
         .clock-title { font-size: 1.2rem; text-transform: uppercase; margin-bottom: 15px; font-weight: 800; }
         .time-group { margin-bottom: 15px; }
         .time-label { font-size: 0.8rem; color: var(--muted); display: block; margin-bottom: 2px; font-weight: 600; }
@@ -33,9 +38,6 @@
         .controls { display: flex; flex-direction: column; gap: 15px; }
         button { font-size: 1.4rem; font-weight: bold; padding: 20px; border: none; border-radius: 50px; cursor: pointer; user-select: none; transition: background 0.2s, transform 0.1s; }
         button:active { transform: scale(0.97); }
-        #actionBtn { background: #e0e0e0; color: #121212; }
-        #actionBtn.work-state { background: var(--work); color: #000; }
-        .rest-state { background: var(--rest) !important; color: #000 !important; }
         .secondary-btns { display: grid; grid-template-columns: 1fr 1fr; gap: 15px; }
         #pauseBtn { background: #555; color: #fff; font-size: 1.1rem; padding: 15px; }
         #resetBtn { background: #2a1414; color: #ff5252; font-size: 1.1rem; padding: 15px; border: 1px solid #5c1d1d; }
@@ -48,7 +50,7 @@
             <div class="setting-group"><label for="workDurationInput">⏱️ Робота (сек)</label><input type="number" id="workDurationInput" min="1" value="45"></div>
             <div class="setting-group"><label for="restDurationInput">⏱️ Відпочинок (сек)</label><input type="number" id="restDurationInput" min="1" value="60"></div>
         </div>
-        <div class="clocks-grid">
+        <div class="clocks-grid" id="clocksGrid">
             <div class="clock-card work">
                 <div class="clock-title">💼 РОБОТА</div>
                 <div class="time-group"><span class="time-label">ЗВОРОТНІЙ ВІДЛІК</span><div id="work-countdown" class="time-display countdown">00:45.0</div></div>
@@ -63,7 +65,6 @@
             </div>
         </div>
         <div class="controls">
-            <button id="actionBtn">СТАРТ (РОБОТА)</button>
             <div class="secondary-btns"><button id="pauseBtn">ПАУЗА</button><button id="resetBtn">Скинути все</button></div>
         </div>
     </div>
@@ -128,44 +129,59 @@
             updateDisplays();
         }
         function startTicker() { if (intervalId) clearInterval(intervalId); lastUpdateTime = Date.now(); intervalId = setInterval(tick, 100); }
-        function handleAction() {
-            playBeep('action'); const se = document.getElementById('status'), ae = document.getElementById('actionBtn');
+        function updateGlow() {
+            document.querySelectorAll('.clock-card').forEach(card => {
+                card.classList.remove('glow-work', 'glow-rest');
+            });
+            const activeCard = state === 'WORK' ? document.querySelector('.clock-card.work') : document.querySelector('.clock-card.rest');
+            if (activeCard) activeCard.classList.add(state === 'WORK' ? 'glow-work' : 'glow-rest');
+        }
+        function handleAction(phase) {
+            if (state === phase) return;
+            playBeep('action'); const se = document.getElementById('status');
             if (state === 'IDLE' || state === 'PAUSED') {
-                state = (state === 'PAUSED') ? previousState : 'WORK';
-                if (state === 'WORK') { se.innerText = "Іде робота"; se.className = "status-badge work-active"; ae.innerText = "ПЕРЕКЛЮЧИТИ НА ВІДПОЧИНОК"; ae.className = "work-state"; }
-                else { se.innerText = "Іде відпочинок"; se.className = "status-badge rest-active"; ae.innerText = "ПЕРЕКЛЮЧИТИ НА РОБОТУ"; ae.className = "rest-state"; }
+                if (!(state === 'PAUSED' && phase === previousState)) {
+                    if (phase === 'WORK') timers.workRound = 0; else timers.restRound = 0;
+                }
+                state = phase;
+                if (phase === 'WORK') { se.innerText = "Іде робота"; se.className = "status-badge work-active"; }
+                else { se.innerText = "Іде відпочинок"; se.className = "status-badge rest-active"; }
                 startTicker();
             } else if (state === 'WORK') {
                 state = 'REST'; timers.restRound = 0; currentSignalStep = 0;
-                se.innerText = "Іде відпочинок"; se.className = "status-badge rest-active"; ae.innerText = "ПЕРЕКЛЮЧИТИ НА РОБОТУ"; ae.className = "rest-state"; lastUpdateTime = Date.now();
+                se.innerText = "Іде відпочинок"; se.className = "status-badge rest-active"; lastUpdateTime = Date.now();
             } else if (state === 'REST') {
                 state = 'WORK'; timers.workRound = 0; currentSignalStep = 0;
-                se.innerText = "Іде робота"; se.className = "status-badge work-active"; ae.innerText = "ПЕРЕКЛЮЧИТИ НА ВІДПОЧИНОК"; ae.className = "work-state"; lastUpdateTime = Date.now();
+                se.innerText = "Іде робота"; se.className = "status-badge work-active"; lastUpdateTime = Date.now();
             }
+            updateGlow();
             updateDisplays();
         }
         function handlePause() {
             if (state === 'WORK' || state === 'REST') {
                 playBeep('action'); previousState = state; state = 'PAUSED'; if (intervalId) clearInterval(intervalId);
-                const se = document.getElementById('status'), ae = document.getElementById('actionBtn');
-                se.innerText = "Пауза"; se.className = "status-badge paused"; ae.innerText = `ПРОДОВЖИТИ (${previousState === 'WORK' ? 'РОБОТА' : 'ВІДПОЧИНОК'})`; ae.className = previousState === 'WORK' ? 'work-state' : 'rest-state';
+                const se = document.getElementById('status'); se.innerText = "Пауза"; se.className = "status-badge paused";
             }
         }
         function handleReset() {
             if (intervalId) clearInterval(intervalId); intervalId = null; state = 'IDLE'; previousState = 'WORK'; currentSignalStep = 0;
             timers = { workTotal: 0, workRound: 0, restTotal: 0, restRound: 0 };
-            const se = document.getElementById('status'), ae = document.getElementById('actionBtn');
-            se.innerText = "Готово до старту"; se.className = "status-badge"; ae.innerText = "СТАРТ (РОБОТА)"; ae.className = "";
+            const se = document.getElementById('status'); se.innerText = "Готово до старту"; se.className = "status-badge";
+            updateGlow();
             updateDisplays();
         }
         document.addEventListener("DOMContentLoaded", function() {
             loadSettings();
-            document.getElementById('actionBtn').addEventListener('click', handleAction);
+            document.getElementById('clocksGrid').addEventListener('click', function(e) {
+                const card = e.target.closest ? e.target.closest('.clock-card') : null;
+                if (!card) return;
+                handleAction(card.classList.contains('work') ? 'WORK' : 'REST');
+            });
             document.getElementById('pauseBtn').addEventListener('click', handlePause);
             document.getElementById('resetBtn').addEventListener('click', handleReset);
             document.getElementById('workDurationInput').addEventListener('input', saveSettings);
             document.getElementById('restDurationInput').addEventListener('input', saveSettings);
-            document.addEventListener('keyup', function(e) { if (e.code === 'Space' || e.keyCode === 32) handleAction(); });
+            document.addEventListener('keyup', function(e) { if (e.code === 'Space' || e.keyCode === 32) { if (e.target.tagName === 'INPUT') return; let phase = state; if (phase === 'PAUSED') phase = previousState; handleAction(phase); } });
         });
     </script>
 </body>
