@@ -45,7 +45,8 @@
         button:active { transform: scale(0.97); }
         .secondary-btns { display: grid; grid-template-columns: 1fr; gap: 15px; }
         #resetBtn { background: #2a1414; color: #ff5252; font-size: 1.1rem; padding: 15px; border: 1px solid #5c1d1d; }
-        .history { background: var(--card); border-radius: 16px; padding: 15px; margin-bottom: 25px; text-align: left; }
+        .history { background: var(--card); border-radius: 16px; padding: 15px; margin-bottom: 25px; text-align: left; display: grid; grid-template-columns: 1fr 1fr; gap: 20px; }
+        @media (max-width: 479px) { .history { grid-template-columns: 1fr; } }
         .history-title { font-size: 1rem; text-transform: uppercase; font-weight: 800; color: var(--muted); margin-bottom: 10px; }
         .history-list { list-style: none; margin: 0; padding: 0; }
         .history-item { font-family: monospace; color: var(--text); padding: 6px 0; border-bottom: 1px solid #333; font-size: 1rem; }
@@ -169,9 +170,20 @@
             const container = document.getElementById('history');
             if (!container) return;
             container.innerHTML = '';
-            const title = document.createElement('div'); title.className = 'history-title'; title.innerText = "ІСТОРІЯ РАУНДІВ"; container.appendChild(title);
-            const list = document.createElement('ul'); list.className = 'history-list'; container.appendChild(list);
-            history.forEach(function(h, i) { const li = document.createElement('li'); li.className = 'history-item'; li.innerText = `${h.phase === 'WORK' ? 'Робота' : 'Відпочинок'} #${i + 1}: ${formatTime(h.duration)}`; list.appendChild(li); });
+            ['WORK', 'REST'].forEach(function(phase) {
+                const col = document.createElement('div'); col.className = 'history-column';
+                const title = document.createElement('div'); title.className = 'history-title'; title.innerText = phase === 'WORK' ? 'Робота' : 'Відпочинок';
+                const list = document.createElement('ul'); list.className = 'history-list';
+                let n = 0;
+                history.forEach(function(h) {
+                    if (h.phase !== phase) return;
+                    n++;
+                    const li = document.createElement('li'); li.className = 'history-item'; li.innerText = `${phase === 'WORK' ? 'Робота' : 'Відпочинок'} #${n}: ${formatTime(h.duration)}`;
+                    list.appendChild(li);
+                });
+                col.appendChild(title); col.appendChild(list);
+                container.appendChild(col);
+            });
         }
         function handleAction(phase) {
             playBeep('action'); const se = document.getElementById('status');
@@ -202,6 +214,7 @@
             }
             updateGlow();
             updateDisplays();
+            renderHistory();
         }
         function handleReset() {
             if (intervalId) clearInterval(intervalId); intervalId = null; state = 'IDLE'; previousState = 'WORK'; currentSignalStep = 0;
