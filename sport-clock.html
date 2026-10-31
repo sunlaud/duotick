@@ -59,20 +59,18 @@
 <body>
     <div class="container">
         <div id="status" class="status-badge">Готово до старту</div>
-        <div class="settings-grid">
-            <div class="setting-group"><label for="workDurationInput">⏱️ Робота (сек)</label><input type="number" id="workDurationInput" min="1" value="45"></div>
-            <div class="setting-group"><label for="restDurationInput">⏱️ Відпочинок (сек)</label><input type="number" id="restDurationInput" min="1" value="60"></div>
-        </div>
         <div class="clocks-grid" id="clocksGrid">
             <div class="clock-card work">
                 <div class="clock-title">💼 РОБОТА</div>
                 <div class="time-group"><div id="work-round" class="time-display round">00:00.0</div></div>
+                <div class="setting-group"><label for="workDurationInput">⏱️ РОБОТА (сек)</label><input type="number" id="workDurationInput" min="1" value="45"></div>
                 <div class="time-group"><span class="time-label">ЗВОРОТНІЙ ВІДЛІК</span><div id="work-countdown" class="time-display countdown">00:45.0</div></div>
                 <div class="time-group"><span class="time-label">ЗАГАЛЬНИЙ ЧАС</span><div id="work-total" class="time-display total">00:00.0</div></div>
             </div>
             <div class="clock-card rest">
                 <div class="clock-title">☕ ВІДПОЧИНОК</div>
                 <div class="time-group"><div id="rest-round" class="time-display round">00:00.0</div></div>
+                <div class="setting-group"><label for="restDurationInput">⏱️ ВІДПОЧИНОК (сек)</label><input type="number" id="restDurationInput" min="1" value="60"></div>
                 <div class="time-group"><span class="time-label">ЗВОРОТНІЙ ВІДЛІК</span><div id="rest-countdown" class="time-display countdown">01:00.0</div></div>
                 <div class="time-group"><span class="time-label">ЗАГАЛЬНИЙ ЧАС</span><div id="rest-total" class="time-display total">00:00.0</div></div>
             </div>
