@@ -97,8 +97,6 @@
             const w = document.getElementById('workDurationInput').value, r = document.getElementById('restDurationInput').value;
             localStorage.setItem('sw_w', w); localStorage.setItem('sw_r', r);
             config.workDuration = (parseInt(w) || 45) * 1000; config.restDuration = (parseInt(r) || 60) * 1000;
-            if (document.getElementById('workDurationInput').value) addQuickDuration('WORK', parseInt(document.getElementById('workDurationInput').value));
-            if (document.getElementById('restDurationInput').value) addQuickDuration('REST', parseInt(document.getElementById('restDurationInput').value));
             renderQuickDurations();
             if (state === 'IDLE') updateDisplays();
         }
