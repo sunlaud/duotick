@@ -48,6 +48,7 @@
         #resetBtn { background: #2a1414; color: #ff5252; font-size: 1.1rem; padding: 15px; border: 1px solid #5c1d1d; width: 100%; }
         .preset-btn { background: #333; color: #aaa; border: 1px solid #444; border-radius: 14px; padding: 4px 10px; font-size: 1rem; font-weight: bold; cursor: pointer; }
         .history { background: var(--card); border-radius: 16px; padding: 15px; margin-bottom: 25px; text-align: left; display: grid; grid-template-columns: 1fr 1fr; gap: 20px; width: 100%; }
+        .session-total { background: var(--card); border-radius: 16px; padding: 10px 15px; margin-bottom: 25px; text-align: center; width: 100%; font-size: 1.2rem; font-weight: bold; color: var(--text); }
         @media (max-width: 479px) { .history { grid-template-columns: 1fr; } }
         .history-title { font-size: 1rem; text-transform: uppercase; font-weight: 800; color: var(--muted); margin-bottom: 10px; }
         .history-list { list-style: none; margin: 0; padding: 0; }
@@ -75,6 +76,7 @@
                 <div class="time-group"><span class="time-label">ЗАГАЛЬНИЙ ЧАС</span><div id="rest-total" class="time-display total">00:00.0</div></div>
             </div>
         </div>
+        <div id="sessionTotal" class="session-total">Загальний час сесії: 00:00.0</div>
         <div class="history" id="history"></div>
         <div class="controls">
             <div class="secondary-btns"><button id="resetBtn">Скинути все</button></div>
@@ -132,6 +134,7 @@
             document.getElementById('work-total').innerText = formatTime(timers.workTotal);
             document.getElementById('rest-round').innerText = formatTime(timers.restRound);
             document.getElementById('rest-total').innerText = formatTime(timers.restTotal);
+            document.getElementById('sessionTotal').innerText = 'Загальний час сесії: ' + formatTime(timers.workTotal + timers.restTotal);
             let wv = config.workDuration - timers.workRound, rv = config.restDuration - timers.restRound;
             let we = document.getElementById('work-countdown'), re = document.getElementById('rest-countdown');
             we.innerText = formatTime(wv); re.innerText = formatTime(rv);
