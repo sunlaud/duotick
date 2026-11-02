@@ -1,4 +1,4 @@
-const CACHE_NAME = 'sport-clock-v4';
+const CACHE_NAME = 'sport-clock-v5';
 
 const PRECACHE = [
   './',
@@ -16,30 +16,17 @@ const SHELL = ['./', './index.html'];
 // Immutable assets can be served from the cache first.
 const CACHE_FIRST = ['./sport-clock-manifest.json', './icon-192.png', './icon-512.png', './icon-512-maskable.png'];
 
+function absolute(path) {
+  return new URL(path, new URL('./', self.location.href)).href;
+}
+
 self.addEventListener('install', function (event) {
   event.waitUntil(
     caches.open(CACHE_NAME).then(function (cache) {
-      // Fetch with a cache-busting query so the install always pulls fresh
-      // copies from the server instead of reusing entries from the HTTP
-      // cache or from a previous version of this cache.
-      //
-      // URLs are resolved against the worker scope, so they are absolute
-      // here: relative URLs are matched by the Cache API against the
-      // scope, which makes the clean and cache-busted entries disagree.
-      const scope = new URL('./', self.location.href);
-      const urls = PRECACHE.map(function (url) {
-        return new URL(url, scope).href + '?update=' + Date.now();
-      });
-      return cache.addAll(urls).then(function () {
-        // Store the shell under its clean URL too, so it can be served from
-        // the cache while offline.
-        return Promise.all(urls.map(function (url) {
-          const clean = url.split('?')[0];
-          return cache.match(url).then(function (response) {
-            return cache.put(clean, response);
-          });
-        }));
-      });
+      // The URLs are resolved against the worker scope, so the entries are
+      // stored under the same keys the fetch handler looks them up with.
+      const urls = PRECACHE.map(absolute);
+      return cache.addAll(urls);
     }).then(function () {
       return self.skipWaiting();
     })
@@ -69,38 +56,54 @@ self.addEventListener('activate', function (event) {
 
 function isShell(url) {
   return SHELL.some(function (path) {
-    return url.pathname.endsWith(path.replace('./', '/')) ||
-           url.pathname === path.replace('./', '/');
+    const pathname = new URL(absolute(path)).pathname;
+    return url.pathname === pathname;
   });
 }
 
 function isCacheFirst(url) {
   return CACHE_FIRST.some(function (path) {
-    return url.pathname.endsWith(path.replace('./', '/'));
+    return url.pathname === new URL(absolute(path)).pathname;
   });
 }
 
-// Re-fetch the app shell from the network and replace the cached copy if it
-// changed. This is what lets a client pick up a new deploy without any
-// manual version bump: the worker compares the server's index.html with the
-// cached one and updates the cache when they differ.
+// Re-fetch the app shell from the network and replace the cached copies if
+// it changed. This is what lets a client pick up a new deploy without any
+// manual version bump.
+//
+// The shell is cached under more than one URL: the directory index, which
+// is what a visit to the scope root loads, and index.html itself. Both
+// have to be refreshed, otherwise the copy that is actually served stays
+// stale even though the worker noticed the change.
 function updateShell() {
-  const scope = new URL('./', self.location.href);
-  const shellUrl = new URL('./index.html', scope).href;
-  return fetch(shellUrl, { cache: 'no-cache' }).then(function (response) {
+  const indexUrl = absolute('./index.html');
+  const rootUrl = absolute('./');
+
+  return fetch(indexUrl, { cache: 'no-cache' }).then(function (response) {
     if (!response || !response.ok) return Promise.resolve(false);
-    return caches.open(CACHE_NAME).then(function (cache) {
-      return cache.match(shellUrl).then(function (cached) {
-        if (!cached) {
-          return cache.put(shellUrl, response.clone()).then(function () {
-            return true;
+    return response.text().then(function (body) {
+      return caches.open(CACHE_NAME).then(function (cache) {
+        return cache.keys().then(function (requests) {
+          // Refresh every cached copy of the shell that differs from the
+          // copy on the server.
+          const stale = requests.filter(function (request) {
+            const path = new URL(request.url).pathname;
+            return path === new URL(indexUrl).pathname || path === new URL(rootUrl).pathname;
           });
-        }
-        // Compare the bodies to find out whether the app changed.
-        return Promise.all([cached.clone().text(), response.clone().text()]).then(function (texts) {
-          if (texts[0] === texts[1]) return false;
-          return cache.put(shellUrl, response.clone()).then(function () {
-            return true;
+          return Promise.all(stale.map(function (request) {
+            return cache.match(request).then(function (cached) {
+              if (!cached) return Promise.resolve(false);
+              return cached.text().then(function (text) {
+                if (text === body) return Promise.resolve(false);
+                return cache.put(request, new Response(body, {
+                  headers: response.headers
+                })).then(function () {
+                  return true;
+                });
+              });
+            });
+          })).then(function (results) {
+            return results.some(Boolean);
           });
         });
       });
@@ -131,7 +134,7 @@ self.addEventListener('fetch', function (event) {
         return response;
       }).catch(function () {
         return caches.match(request).then(function (cached) {
-          return cached || caches.match('./index.html');
+          return cached || caches.match(absolute('./index.html'));
         });
       })
     );
@@ -169,7 +172,7 @@ self.addEventListener('fetch', function (event) {
       return response;
     }).catch(function () {
       return caches.match(request).then(function (cached) {
-        return cached || caches.match('./index.html');
+        return cached || caches.match(absolute('./index.html'));
       });
     })
   );
@@ -184,14 +187,16 @@ self.addEventListener('periodicsync', function (event) {
   }
 });
 
-// Poll for updates while the app is open, so a long-lived tab still picks up
-// a new deploy. This covers browsers that do not support periodicsync.
+// Check for a newer deploy on request from the page, which covers browsers
+// without periodicsync support.
 self.addEventListener('message', function (event) {
   if (event.data === 'check-update') {
     event.waitUntil(updateShell());
   }
 });
 
+// Poll for updates while the app is open, so a long-lived tab still picks up
+// a new deploy.
 setInterval(function () {
   updateShell();
 }, 30 * 60 * 1000);

@@ -18,6 +18,7 @@ step and no dependencies, so it can be hosted by any static file server.
   actual time on top of the planned time
 - The active phase is highlighted with a pulsing glow
 - Installable as a PWA, with an icon on the home screen
+- Shows the app version in the footer
 - Works offline once loaded, and keeps running if the tab is backgrounded
 - State survives a reload or a browser restart
 
@@ -51,6 +52,12 @@ icon-512-maskable.png
 subdirectory, and the directory index is what the service worker's scope
 resolves to.
 
+## Version
+
+The version is shown in the footer of the app and is also recorded in
+`sport-clock-manifest.json`. It is defined once, as `APP_VERSION` in
+`index.html`, and should be bumped on every release.
+
 ## Deployment
 
 Copy the files into the directory the server publishes, and make sure
@@ -74,7 +81,10 @@ they do not change between releases.
 
 **No manual step is needed to push a new version to clients.** The worker
 compares the copy of `index.html` on the server with the one in the cache
-and replaces the cached copy when they differ. The check runs:
+and replaces the cached copy when they differ. The shell is cached under
+two URLs, the directory index and `index.html` itself, and both are
+refreshed, since a visit to the scope root is served from the former. The
+check runs:
 
 - when the worker activates
 - when the app is brought back to the foreground
