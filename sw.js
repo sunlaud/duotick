@@ -13,8 +13,10 @@ const PRECACHE = [
 // new deploy is never picked up: the cached copy would be served forever.
 const SHELL = ['./', './index.html'];
 
-// Immutable assets can be served from the cache first.
-const CACHE_FIRST = ['./sport-clock-manifest.json', './icon-192.png', './icon-512.png', './icon-512-maskable.png'];
+// Immutable assets can be served from the cache first. The manifest is not
+// one of them: it carries the version of the app, which is read by the
+// page to show in the footer, so it has to be current.
+const CACHE_FIRST = ['./icon-192.png', './icon-512.png', './icon-512-maskable.png'];
 
 function absolute(path) {
   return new URL(path, new URL('./', self.location.href)).href;

@@ -54,9 +54,9 @@ resolves to.
 
 ## Version
 
-The version is shown in the footer of the app and is also recorded in
-`sport-clock-manifest.json`. It is defined once, as `APP_VERSION` in
-`index.html`, and should be bumped on every release.
+The version is shown in the footer of the app. It is defined once, as
+`version` in `sport-clock-manifest.json`, and should be bumped on any
+change to the app. The page reads it from the manifest.
 
 ## Deployment
 

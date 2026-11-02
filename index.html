@@ -138,10 +138,22 @@
 
 
     <script>
-        // The version of the app. It is shown in the footer and is also
-        // written into the manifest, so there is one place to bump it on a
-        // release.
-        const APP_VERSION = '1.0.1';
+        // The version of the app is taken from the manifest, which is the
+        // single place to bump it on a release.
+        let appVersion = '';
+
+        function loadVersion() {
+            return fetch('sport-clock-manifest.json', { cache: 'no-cache' })
+                .then(function (response) { return response.json(); })
+                .then(function (manifest) {
+                    appVersion = manifest.version || '';
+                    const el = document.getElementById('appVersion');
+                    if (el && appVersion) el.innerText = 'v' + appVersion;
+                })
+                .catch(function () {
+                    // The manifest could not be read, leave the version empty.
+                });
+        }
 
         let state = 'IDLE', previousState = 'WORK';
         let timers = { workTotal: 0, workRound: 0, restTotal: 0, restRound: 0 };
@@ -408,7 +420,7 @@
         }
         document.addEventListener("DOMContentLoaded", function() {
             loadSettings();
-            document.getElementById('appVersion').innerText = 'v' + APP_VERSION;
+            loadVersion();
             if (!restoreState()) { state = 'IDLE'; previousState = 'WORK'; timers = { workTotal: 0, workRound: 0, restTotal: 0, restRound: 0 }; currentSignalStep = 0; }
             if (state !== 'IDLE') startTicker(lastUpdateTime);
             updateGlow();
