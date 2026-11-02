@@ -97,17 +97,13 @@
         .history-grid > :nth-last-child(-n+3) { border-bottom: none; }
         .history-actual { display: block; font-family: monospace; font-size: 1rem; color: var(--text); line-height: 1.1; white-space: nowrap; }
         .history-planned { display: block; font-family: monospace; font-size: 0.72rem; color: #777; line-height: 1.1; white-space: nowrap; padding-top: 2px; margin-top: 2px; border-top: 1px solid #2a2a2a; }
-        /* Below that the clock cards are stacked, so the two phases of a
-           round are stacked as well. The work entry of a round carries the
-           number, and the border between the two entries of a round is
-           removed so they read as one group. */
+        /* The two phases of a round stay side by side on a narrow screen as
+           well, since the times are short enough to fit in half the width.
+           This keeps the history half as tall as it would be if the phases
+           were stacked. */
         @media (max-width: 479px) {
-          .history-grid { grid-template-columns: 26px minmax(0, 1fr); gap: 0 12px; }
-          .history-cell.work-col { grid-column: 2; }
-          .history-cell.rest-col { grid-column: 2; }
-          .history-n { grid-column: 1; }
-          .history-cell.rest-col { border-bottom: 1px solid #333; }
-          .history-cell.rest-col + .history-n { border-bottom: none; }
+          .history-cell { padding: 6px 0 6px 6px; }
+          .history-n { padding: 6px 6px 6px 0; }
         }
     </style>
 </head>
