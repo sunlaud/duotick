@@ -1,8 +1,4 @@
-const CACHE_NAME = 'sport-clock-v3';
-
-// Version is bumped on deploy to bust the precache. Update it whenever the
-// app shell changes so clients pick up the new version on the next visit.
-const VERSION = '2026-11-02';
+const CACHE_NAME = 'sport-clock-v4';
 
 const PRECACHE = [
   './',
@@ -23,12 +19,27 @@ const CACHE_FIRST = ['./sport-clock-manifest.json', './icon-192.png', './icon-51
 self.addEventListener('install', function (event) {
   event.waitUntil(
     caches.open(CACHE_NAME).then(function (cache) {
-      // Cache-bust the precache so the install always pulls fresh copies
-      // instead of reusing entries from a previous cache version.
+      // Fetch with a cache-busting query so the install always pulls fresh
+      // copies from the server instead of reusing entries from the HTTP
+      // cache or from a previous version of this cache.
+      //
+      // URLs are resolved against the worker scope, so they are absolute
+      // here: relative URLs are matched by the Cache API against the
+      // scope, which makes the clean and cache-busted entries disagree.
+      const scope = new URL('./', self.location.href);
       const urls = PRECACHE.map(function (url) {
-        return url + '?v=' + VERSION;
+        return new URL(url, scope).href + '?update=' + Date.now();
       });
-      return cache.addAll(urls);
+      return cache.addAll(urls).then(function () {
+        // Store the shell under its clean URL too, so it can be served from
+        // the cache while offline.
+        return Promise.all(urls.map(function (url) {
+          const clean = url.split('?')[0];
+          return cache.match(url).then(function (response) {
+            return cache.put(clean, response);
+          });
+        }));
+      });
     }).then(function () {
       return self.skipWaiting();
     })
@@ -48,6 +59,10 @@ self.addEventListener('activate', function (event) {
       // Take over open tabs immediately so a new version is used without
       // requiring the user to close every tab first.
       return self.clients.claim();
+    }).then(function () {
+      // A newly activated worker may still carry a stale app shell from an
+      // older release, so sync it as soon as the worker takes over.
+      return updateShell();
     })
   );
 });
@@ -62,6 +77,37 @@ function isShell(url) {
 function isCacheFirst(url) {
   return CACHE_FIRST.some(function (path) {
     return url.pathname.endsWith(path.replace('./', '/'));
+  });
+}
+
+// Re-fetch the app shell from the network and replace the cached copy if it
+// changed. This is what lets a client pick up a new deploy without any
+// manual version bump: the worker compares the server's index.html with the
+// cached one and updates the cache when they differ.
+function updateShell() {
+  const scope = new URL('./', self.location.href);
+  const shellUrl = new URL('./index.html', scope).href;
+  return fetch(shellUrl, { cache: 'no-cache' }).then(function (response) {
+    if (!response || !response.ok) return Promise.resolve(false);
+    return caches.open(CACHE_NAME).then(function (cache) {
+      return cache.match(shellUrl).then(function (cached) {
+        if (!cached) {
+          return cache.put(shellUrl, response.clone()).then(function () {
+            return true;
+          });
+        }
+        // Compare the bodies to find out whether the app changed.
+        return Promise.all([cached.clone().text(), response.clone().text()]).then(function (texts) {
+          if (texts[0] === texts[1]) return false;
+          return cache.put(shellUrl, response.clone()).then(function () {
+            return true;
+          });
+        });
+      });
+    });
+  }).catch(function () {
+    // Offline: nothing to update.
+    return false;
   });
 }
 
@@ -128,3 +174,24 @@ self.addEventListener('fetch', function (event) {
     })
   );
 });
+
+// Check for a newer deploy in the background. Chrome fires this for
+// installed PWAs, and it lets a client that has been left open pick up a
+// change without a manual reload.
+self.addEventListener('periodicsync', function (event) {
+  if (event.tag === 'check-update') {
+    event.waitUntil(updateShell());
+  }
+});
+
+// Poll for updates while the app is open, so a long-lived tab still picks up
+// a new deploy. This covers browsers that do not support periodicsync.
+self.addEventListener('message', function (event) {
+  if (event.data === 'check-update') {
+    event.waitUntil(updateShell());
+  }
+});
+
+setInterval(function () {
+  updateShell();
+}, 30 * 60 * 1000);

@@ -68,24 +68,27 @@ static-apps/
 
 The service worker fetches the app shell (`index.html` and the directory
 index) from the network first and only falls back to the cache when
-offline, so a new deploy is picked up on the next visit. Icons and the
-manifest are served from the cache first, since they do not change
-between releases.
+offline. Icons and the manifest are served from the cache first, since
+they do not change between releases.
 
-**Bump `VERSION` in `sw.js` whenever `index.html` changes.** The
-precache stores each asset under a `?v=VERSION` query string, so a new
-version is required for the install to pick up changed files:
+**No manual step is needed to push a new version to clients.** The worker
+compares the copy of `index.html` on the server with the one in the cache
+and replaces the cached copy when they differ. The check runs:
 
-```js
-const VERSION = '2026-11-02';
-```
+- when the worker activates
+- when the app is brought back to the foreground
+- every 30 minutes while the app is open
 
-Skipping this step leaves clients on the previous release until the
-cache is cleared manually.
+So a phone that has the app installed picks up a new deploy on its next
+visit, without a console and without reinstalling.
 
-After changing the worker itself, browsers pick up the new version on
-their own. To force it immediately, unregister the worker and clear the
-caches from the browser console:
+The server must not cache `sw.js` or `index.html` aggressively, or the
+browser will keep using the old worker. The nginx config for this app
+sets `Cache-Control: no-cache, no-store, must-revalidate` on `sw.js` and
+`no-cache, must-revalidate` on `index.html`.
+
+To force an immediate update while developing, unregister the worker and
+clear the caches from the browser console:
 
 ```js
 navigator.serviceWorker.getRegistrations().then(rs => rs.forEach(r => r.unregister()));
