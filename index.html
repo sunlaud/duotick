@@ -5,6 +5,7 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Таймер та Секундомір</title>
     <link rel="manifest" href="sport-clock-manifest.json">
+    <link rel="icon" href="icon-192.png">
     <meta name="theme-color" content="#121212">
     <meta name="mobile-web-app-capable" content="yes">
     <meta name="apple-mobile-web-app-capable" content="yes">
@@ -312,7 +313,7 @@
             document.getElementById('restDurationInput').addEventListener('input', saveSettings);
             document.addEventListener('visibilitychange', function() { if (document.visibilityState === 'hidden') saveSnapshot(); });
             window.addEventListener('pagehide', saveSnapshot);
-            if ('serviceWorker' in navigator) { window.addEventListener('load', function() { navigator.serviceWorker.register('sport-clock-sw.js'); }); }
+            if ('serviceWorker' in navigator) { window.addEventListener('load', function() { navigator.serviceWorker.register('sw.js', { scope: './' }); }); }
             document.addEventListener('keyup', function(e) { if (e.code === 'Space' || e.keyCode === 32) { if (e.target.tagName === 'INPUT') return; let phase = state; if (phase === 'PAUSED') phase = previousState; handleAction(phase); } });
         });
     </script>
