@@ -14,7 +14,8 @@ step and no dependencies, so it can be hosted by any static file server.
 - Audio cues: a short beep on every action, two high beeps in the last
   two seconds of a round, and a longer low beep when the round ends
 - Session total across both phases
-- History of completed rounds, split into work and rest columns
+- History of completed rounds, listed chronologically with the actual time
+  on top and the planned time below it
 - The active phase is highlighted with a pulsing glow
 - Installable as a PWA, with an icon on the home screen
 - Works offline once loaded, and keeps running if the tab is backgrounded

@@ -68,16 +68,23 @@
         }
         .setting-group input.pulsing { animation: duration-pulse 400ms cubic-bezier(0.34, 1.56, 0.64, 1); }
         @media (prefers-reduced-motion: reduce) { .setting-group input.pulsing { animation: none; } }
-        .history { background: var(--card); border-radius: 16px; padding: 10px 15px; margin-bottom: 15px; text-align: left; display: grid; grid-template-columns: 1fr 1fr; gap: 20px; width: 100%; }
+        .history { background: var(--card); border-radius: 16px; padding: 10px 15px; margin-bottom: 15px; text-align: left; width: 100%; }
         .session-total { background: var(--card); border-radius: 16px; padding: 6px 15px; margin-bottom: 8px; text-align: center; width: 100%; font-size: 1.2rem; font-weight: bold; color: var(--text); }
-        @media (max-width: 479px) { .history { grid-template-columns: 1fr; } }
         .history-title { font-size: 1rem; text-transform: uppercase; font-weight: 800; color: var(--muted); margin-bottom: 6px; }
         .history-list { list-style: none; margin: 0; padding: 0; }
-        .history-item { font-family: monospace; color: var(--text); padding: 6px 0; border-bottom: 1px solid #333; font-size: 1rem; }
-        .history-table { width: 100%; border-collapse: collapse; }
-        .history-table th, .history-table td { font-family: monospace; padding: 6px 0; border-bottom: 1px solid #333; font-size: 0.95rem; text-align: right; }
-        .history-table th:first-child, .history-table td:first-child { text-align: left; color: var(--muted); }
-        .history-table th:nth-child(2), .history-table td:nth-child(2) { color: #888; }
+        /* One chronological list of rounds, so work and rest can be compared
+           directly on a narrow screen. The phase is shown as a coloured bar
+           instead of a separate column per phase. */
+        .history-item { display: grid; grid-template-columns: 28px 4px 1fr; align-items: center; gap: 10px; padding: 6px 0; border-bottom: 1px solid #333; }
+        .history-item:last-child { border-bottom: none; }
+        .history-item .history-n { font-family: monospace; font-size: 0.85rem; color: var(--muted); text-align: right; }
+        .history-item .history-bar { width: 4px; align-self: stretch; min-height: 26px; border-radius: 2px; background: #444; }
+        .history-item.work .history-bar { background: var(--work); }
+        .history-item.rest .history-bar { background: var(--rest); }
+        .history-item .history-times { display: flex; flex-direction: column; gap: 2px; }
+        .history-item .history-actual { font-family: monospace; font-size: 1rem; color: var(--text); line-height: 1.1; }
+        .history-item .history-planned { font-family: monospace; font-size: 0.75rem; color: #777; line-height: 1.1; padding-top: 2px; border-top: 1px solid #2a2a2a; }
+        .history-empty { color: var(--muted); font-size: 0.9rem; padding: 4px 0; }
     </style>
 </head>
 <body>
@@ -258,30 +265,52 @@
             const container = document.getElementById('history');
             if (!container) return;
             container.innerHTML = '';
-            ['WORK', 'REST'].forEach(function(phase) {
-                const col = document.createElement('div'); col.className = 'history-column';
-                const table = document.createElement('table'); table.className = 'history-table';
-                const thead = document.createElement('thead');
-                const headRow = document.createElement('tr');
-                const th1 = document.createElement('th'); th1.innerText = '№';
-                const th2 = document.createElement('th'); th2.innerText = 'Заплановано';
-                const th3 = document.createElement('th'); th3.innerText = 'Фактично';
-                headRow.appendChild(th1); headRow.appendChild(th2); headRow.appendChild(th3); thead.appendChild(headRow);
-                const tbody = document.createElement('tbody');
-                let n = 0;
-                history.forEach(function(h) {
-                    if (h.phase !== phase) return;
-                    n++;
-                    const tr = document.createElement('tr');
-                    const td1 = document.createElement('td'); td1.innerText = n;
-                    const td2 = document.createElement('td'); td2.innerText = formatTime(h.planned);
-                    const td3 = document.createElement('td'); td3.innerText = formatTime(h.duration);
-                    tr.appendChild(td1); tr.appendChild(td2); tr.appendChild(td3); tbody.appendChild(tr);
-                });
-                table.appendChild(thead); table.appendChild(tbody);
-                col.appendChild(table);
-                container.appendChild(col);
+            const title = document.createElement('div');
+            title.className = 'history-title';
+            title.innerText = 'Історія раундів';
+            container.appendChild(title);
+            if (!history.length) {
+                const empty = document.createElement('div');
+                empty.className = 'history-empty';
+                empty.innerText = 'Ще немає завершених раундів';
+                container.appendChild(empty);
+                return;
+            }
+            const list = document.createElement('ul');
+            list.className = 'history-list';
+            // Rounds are listed in the order they were completed, so work and
+            // rest can be compared directly. The number is shared by both
+            // phases, so it counts rounds rather than rounds of one phase.
+            history.forEach(function(h, index) {
+                const li = document.createElement('li');
+                li.className = 'history-item ' + (h.phase === 'WORK' ? 'work' : 'rest');
+
+                const n = document.createElement('span');
+                n.className = 'history-n';
+                n.innerText = index + 1;
+
+                const bar = document.createElement('span');
+                bar.className = 'history-bar';
+
+                const times = document.createElement('span');
+                times.className = 'history-times';
+
+                const actual = document.createElement('span');
+                actual.className = 'history-actual';
+                actual.innerText = formatTime(h.duration);
+
+                const planned = document.createElement('span');
+                planned.className = 'history-planned';
+                planned.innerText = 'план ' + formatTime(h.planned);
+
+                times.appendChild(actual);
+                times.appendChild(planned);
+                li.appendChild(n);
+                li.appendChild(bar);
+                li.appendChild(times);
+                list.appendChild(li);
             });
+            container.appendChild(list);
         }
         function handleAction(phase) {
             playBeep('action'); const se = document.getElementById('status');
