@@ -238,6 +238,11 @@
         function updateGlow() {
             document.querySelectorAll('.clock-card').forEach(card => {
                 card.classList.remove('glow-work', 'glow-rest', 'glow-static', 'inactive');
+                // Nothing is highlighted while the app is idle.
+                if (state === 'IDLE') {
+                    card.classList.add('inactive');
+                    return;
+                }
                 const phase = state === 'PAUSED' ? previousState : state;
                 const isCurrent = card.classList.contains(phase === 'WORK' ? 'work' : 'rest');
                 if (isCurrent) {
