@@ -112,6 +112,11 @@
         let quickDurations = { WORK: [45, 60, 120], REST: [45, 60, 120] };
         let lastUpdateTime = 0, intervalId = null, audioCtx = null;
         let config = { workDuration: 45000, restDuration: 60000 }, currentSignalStep = 0;
+        // Planned duration of the round that is currently running. It is
+        // captured when the round starts, so changing the configured
+        // duration later does not change the countdown or the history entry
+        // for a round that is already under way.
+        let roundDuration = { WORK: 0, REST: 0 };
         function loadSettings() {
             const w = localStorage.getItem('sw_w'), r = localStorage.getItem('sw_r');
             if (w) { document.getElementById('workDurationInput').value = w; config.workDuration = parseInt(w) * 1000; }
@@ -124,13 +129,15 @@
             if (state === 'IDLE') updateDisplays();
         }
         function saveSnapshot() {
-            try { localStorage.setItem('sw_state', JSON.stringify({ state: state, previousState: previousState, timers: timers, currentSignalStep: currentSignalStep, lastUpdateTime: lastUpdateTime, history: history, quickDurations: quickDurations })); } catch (e) { /* storage full/blocked */ }
+            try { localStorage.setItem('sw_state', JSON.stringify({ state: state, previousState: previousState, timers: timers, currentSignalStep: currentSignalStep, lastUpdateTime: lastUpdateTime, history: history, quickDurations: quickDurations, roundDuration: roundDuration })); } catch (e) { /* storage full/blocked */ }
         }
         function restoreState() {
             try {
                 const s = JSON.parse(localStorage.getItem('sw_state'));
                 if (s && (s.state === 'WORK' || s.state === 'REST' || s.state === 'PAUSED')) {
                     state = s.state; previousState = s.previousState || 'WORK'; timers = s.timers || { workTotal: 0, workRound: 0, restTotal: 0, restRound: 0 }; currentSignalStep = s.currentSignalStep || 0; lastUpdateTime = s.lastUpdateTime || Date.now(); history = s.history || []; quickDurations = s.quickDurations || { WORK: [45, 60, 120], REST: [45, 60, 120] };
+                    // The plan of a round that is under way survives a reload.
+                    roundDuration = s.roundDuration || { WORK: 0, REST: 0 };
                     return true;
                 }
             } catch (e) { /* corrupted snapshot -> fall through to fresh start */ }
@@ -156,7 +163,10 @@
             document.getElementById('rest-round').innerText = formatTime(timers.restRound);
             document.getElementById('rest-total').innerText = formatTime(timers.restTotal);
             document.getElementById('sessionTotal').innerText = 'Загальний час сесії: ' + formatTime(timers.workTotal + timers.restTotal);
-            let wv = config.workDuration - timers.workRound, rv = config.restDuration - timers.restRound;
+            // A round that has not started yet has no plan of its own, so it
+            // shows the currently configured duration.
+            let wv = (roundDuration.WORK || config.workDuration) - timers.workRound;
+            let rv = (roundDuration.REST || config.restDuration) - timers.restRound;
             let we = document.getElementById('work-countdown'), re = document.getElementById('rest-countdown');
             we.innerText = formatTime(wv); re.innerText = formatTime(rv);
             if (wv < 0) we.classList.add('elapsed'); else we.classList.remove('elapsed');
@@ -166,13 +176,13 @@
             const now = Date.now(), delta = now - lastUpdateTime; lastUpdateTime = now;
             if (state === 'WORK') {
                 timers.workRound += delta; timers.workTotal += delta;
-                let rem = config.workDuration - timers.workRound;
+                let rem = (roundDuration.WORK || config.workDuration) - timers.workRound;
                 if (rem <= 2000 && currentSignalStep === 0) { currentSignalStep = 1; playBeep('alert-prep'); }
                 else if (rem <= 1000 && currentSignalStep === 1) { currentSignalStep = 2; playBeep('alert-prep'); }
                 else if (rem <= 0 && currentSignalStep === 2) { currentSignalStep = 3; playBeep('alert-final'); }
             } else if (state === 'REST') {
                 timers.restRound += delta; timers.restTotal += delta;
-                let rem = config.restDuration - timers.restRound;
+                let rem = (roundDuration.REST || config.restDuration) - timers.restRound;
                 if (rem <= 2000 && currentSignalStep === 0) { currentSignalStep = 1; playBeep('alert-prep'); }
                 else if (rem <= 1000 && currentSignalStep === 1) { currentSignalStep = 2; playBeep('alert-prep'); }
                 else if (rem <= 0 && currentSignalStep === 2) { currentSignalStep = 3; playBeep('alert-final'); }
@@ -264,7 +274,7 @@
                     n++;
                     const tr = document.createElement('tr');
                     const td1 = document.createElement('td'); td1.innerText = n;
-                    const td2 = document.createElement('td'); td2.innerText = formatTime(phase === 'WORK' ? config.workDuration : config.restDuration);
+                    const td2 = document.createElement('td'); td2.innerText = formatTime(h.planned);
                     const td3 = document.createElement('td'); td3.innerText = formatTime(h.duration);
                     tr.appendChild(td1); tr.appendChild(td2); tr.appendChild(td3); tbody.appendChild(tr);
                 });
@@ -278,6 +288,9 @@
             if (state === 'IDLE') {
                 state = phase;
                 if (phase === 'WORK') timers.workRound = 0; else timers.restRound = 0;
+                // A new round starts, so it takes the currently configured
+                // duration as its plan.
+                roundDuration[phase] = phase === 'WORK' ? config.workDuration : config.restDuration;
                 if (phase === 'WORK') { se.innerText = "Іде робота"; se.className = "status-badge work-active"; }
                 else { se.innerText = "Іде відпочинок"; se.className = "status-badge rest-active"; }
                 addQuickDuration(phase, (phase === 'WORK' ? config.workDuration : config.restDuration) / 1000);
@@ -285,7 +298,12 @@
                 startTicker();
             } else if (state === 'PAUSED') {
                 const resume = (phase === previousState);
-                if (!resume) { if (phase === 'WORK') timers.workRound = 0; else timers.restRound = 0; }
+                if (!resume) {
+                    // Switching to the other phase starts a new round there.
+                    if (phase === 'WORK') timers.workRound = 0; else timers.restRound = 0;
+                    roundDuration[phase] = phase === 'WORK' ? config.workDuration : config.restDuration;
+                }
+                // Resuming keeps the plan the round was started with.
                 state = phase;
                 if (phase === 'WORK') { se.innerText = "Іде робота"; se.className = "status-badge work-active"; }
                 else { se.innerText = "Іде відпочинок"; se.className = "status-badge rest-active"; }
@@ -296,9 +314,17 @@
                 playBeep('action'); previousState = state; state = 'PAUSED'; if (intervalId) clearInterval(intervalId);
                 se.innerText = "Пауза"; se.className = "status-badge paused";
             } else {
-                history.push({ phase: state, duration: state === 'WORK' ? timers.workRound : timers.restRound });
+                // The planned duration is stored with the record, so changing
+                // the configured duration later does not rewrite the history.
+                history.push({
+                    phase: state,
+                    duration: state === 'WORK' ? timers.workRound : timers.restRound,
+                    planned: (state === 'WORK' ? roundDuration.WORK : roundDuration.REST) || (state === 'WORK' ? config.workDuration : config.restDuration)
+                });
                 state = phase; if (phase === 'WORK') timers.workRound = 0; else timers.restRound = 0;
                 currentSignalStep = 0;
+                // The phase that is being switched to starts a new round.
+                roundDuration[phase] = phase === 'WORK' ? config.workDuration : config.restDuration;
                 if (phase === 'WORK') { se.innerText = "Іде робота"; se.className = "status-badge work-active"; }
                 else { se.innerText = "Іде відпочинок"; se.className = "status-badge rest-active"; }
                 lastUpdateTime = Date.now();
@@ -313,6 +339,7 @@
         function handleReset() {
             if (intervalId) clearInterval(intervalId); intervalId = null; state = 'IDLE'; previousState = 'WORK'; currentSignalStep = 0;
             timers = { workTotal: 0, workRound: 0, restTotal: 0, restRound: 0 };
+            roundDuration = { WORK: 0, REST: 0 };
             history = [];
             const se = document.getElementById('status'); se.innerText = "Готово до старту"; se.className = "status-badge";
             saveSnapshot();
