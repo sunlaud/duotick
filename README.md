@@ -60,6 +60,34 @@ change to the app. The page reads it from the manifest.
 
 ## Deployment
 
+### GitHub Pages
+
+The repository is published to GitHub Pages by a workflow in
+`.github/workflows/pages.yml`. Every push to `master` deploys the
+repository as the site, so the app is served from:
+
+```
+https://<user>.github.io/<repo>/
+```
+
+To set it up:
+
+1. Push the repository to GitHub.
+2. In the repository settings, under **Pages**, set **Build and
+   deployment → Source** to **GitHub Actions**.
+3. Push, or run the **Deploy to GitHub Pages** workflow manually from the
+   Actions tab.
+
+The app is written to work under a subpath: every URL is relative to the
+page, the service worker registers with the scope `./`, and the manifest
+points at `./`. The `.nojekyll` file makes sure the files are served
+exactly as they are in the repository.
+
+Note that GitHub Pages serves over HTTPS, which the service worker
+requires.
+
+### Other servers
+
 Copy the files into the directory the server publishes, and make sure
 `index.html` is the directory index.
 

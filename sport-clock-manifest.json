@@ -1,7 +1,7 @@
 {
   "name": "Sport Clock",
   "short_name": "Sport Clock",
-  "version": "1.0.4",
+  "version": "1.1.0",
   "start_url": "./",
   "scope": "./",
   "display": "standalone",
