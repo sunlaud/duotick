@@ -2,8 +2,12 @@
 
 Two alternating timers for work and rest, served as a static web app.
 
-The two timers — **WORK** and **REST** — run side by side, but only one of
-them runs at a time. Each counts **up**: the number on the card is the time
+The interface speaks Ukrainian and English. It follows the browser
+language on the first visit, and two clickable flags in the footer
+(🇺🇦 and 🇬🇧) switch it; the choice is remembered in local storage.
+Depending on the language, the two timers are labelled **РОБОТА**
+("work") and **ВІДПОЧИНОК** ("rest"), or **WORK** and **REST**. They run
+side by side, but only one of them runs at a time. Each counts **up**: the number on the card is the time
 elapsed in the current round, and a countdown underneath it only tells you
 that the time is up. Nothing switches by itself; you decide when the phase
 changes, so the routine stays flexible. The app is a single page with no
@@ -29,12 +33,12 @@ server.
 
 | Action | Result |
 |---|---|
-| Click the **WORK** or **REST** card | Starts that phase |
+| Click the **РОБОТА**/**WORK** or **ВІДПОЧИНОК**/**REST** card | Starts that phase |
 | Click the **active** card | Pauses the timer |
 | Click the **other** card | Switches phase and records the finished round in the history |
 | Press **Space** | Same as clicking the active card |
 | Click a preset button | Sets that phase's duration |
-| **Скинути все** | Resets timers, history and session total |
+| **Скинути все**/**Reset all** | Resets timers, history and session total |
 
 Durations are set in seconds through the number field in each card. The
 three buttons next to it are quick presets; the most recently used

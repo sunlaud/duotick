@@ -67,6 +67,11 @@
         .clock-card.rest .time-display.round, .clock-card.rest .time-display.countdown { color: var(--rest); }
         .clock-card.inactive .time-display.round, .clock-card.inactive .time-display.countdown, .clock-card.inactive .time-display.total { color: #888; }
         .controls { display: flex; flex-direction: column; gap: 15px; }
+        /* The language switch: two bare flag characters, clickable. The
+           active one is marked up for assistive tech; Windows does not
+           render flag emoji, so there the characters degrade to letters. */
+        .lang-row { display: flex; justify-content: center; align-items: center; gap: 10px; }
+        .lang-btn { font-size: 1.3rem; line-height: 1; padding: 4px; background: none; border: none; box-shadow: none; cursor: pointer; }
         .app-version { text-align: center; font-size: 0.7rem; color: #555; font-family: monospace; }
         button { font-size: 1.4rem; font-weight: bold; padding: 20px; border: none; border-radius: 50px; cursor: pointer; user-select: none; transition: background 0.2s, transform 0.1s; touch-action: manipulation; -webkit-tap-highlight-color: transparent; }
         button:active { transform: scale(0.97); }
@@ -119,22 +124,26 @@
         <div id="status" class="status-badge">Готово до старту</div>
         <div class="clocks-grid" id="clocksGrid">
             <div class="clock-card work">
-                <div class="clock-title">💪 РОБОТА</div>
+                <div class="clock-title" data-i18n="workTitle">💪 РОБОТА</div>
                 <div class="time-group"><div id="work-round" class="time-display round">00:00.0</div></div>
-                <div class="time-group"><span class="time-label">ЗВОРОТНІЙ ВІДЛІК</span><div class="setting-group"><input type="number" id="workDurationInput" min="1" value="45"> <span>сек</span></div><div id="work-countdown" class="time-display countdown">00:45.0</div></div>
-                <div class="time-group"><span class="time-label">ЗАГАЛЬНИЙ ЧАС</span><div id="work-total" class="time-display total">00:00.0</div></div>
+                <div class="time-group"><span class="time-label" data-i18n="countdown">ЗВОРОТНІЙ ВІДЛІК</span><div class="setting-group"><input type="number" id="workDurationInput" min="1" value="45"> <span data-i18n="seconds">сек</span></div><div id="work-countdown" class="time-display countdown">00:45.0</div></div>
+                <div class="time-group"><span class="time-label" data-i18n="totalTime">ЗАГАЛЬНИЙ ЧАС</span><div id="work-total" class="time-display total">00:00.0</div></div>
             </div>
             <div class="clock-card rest">
-                <div class="clock-title">☕ ВІДПОЧИНОК</div>
+                <div class="clock-title" data-i18n="restTitle">☕ ВІДПОЧИНОК</div>
                 <div class="time-group"><div id="rest-round" class="time-display round">00:00.0</div></div>
-                <div class="time-group"><span class="time-label">ЗВОРОТНІЙ ВІДЛІК</span><div class="setting-group"><input type="number" id="restDurationInput" min="1" value="60"> <span>сек</span></div><div id="rest-countdown" class="time-display countdown">01:00.0</div></div>
-                <div class="time-group"><span class="time-label">ЗАГАЛЬНИЙ ЧАС</span><div id="rest-total" class="time-display total">00:00.0</div></div>
+                <div class="time-group"><span class="time-label" data-i18n="countdown">ЗВОРОТНІЙ ВІДЛІК</span><div class="setting-group"><input type="number" id="restDurationInput" min="1" value="60"> <span data-i18n="seconds">сек</span></div><div id="rest-countdown" class="time-display countdown">01:00.0</div></div>
+                <div class="time-group"><span class="time-label" data-i18n="totalTime">ЗАГАЛЬНИЙ ЧАС</span><div id="rest-total" class="time-display total">00:00.0</div></div>
             </div>
         </div>
         <div id="sessionTotal" class="session-total">Загальний час сесії: 00:00.0</div>
         <div class="history" id="history"></div>
         <div class="controls">
-            <div class="secondary-btns"><button id="resetBtn">Скинути все</button></div>
+            <div class="secondary-btns"><button id="resetBtn" data-i18n="reset">Скинути все</button></div>
+            <div class="lang-row">
+                <button id="langUk" class="lang-btn" type="button" data-lang="uk" aria-label="Українська">🇺🇦</button>
+                <button id="langEn" class="lang-btn" type="button" data-lang="en" aria-label="English">🇬🇧</button>
+            </div>
             <div class="app-version" id="appVersion"></div>
         </div>
     </div>
@@ -156,6 +165,77 @@
                 .catch(function () {
                     // The manifest could not be read, leave the version empty.
                 });
+        }
+
+        // The interface speaks Ukrainian and English. The strings live in
+        // I18N, static markup carries data-i18n attributes and everything
+        // that is built in JavaScript reads strings through t(). The
+        // language follows the browser on the first visit and is then only
+        // changed by the explicit switch in the footer.
+        const I18N = {
+            uk: {
+                title: 'DuoTick — Таймер та Секундомір',
+                ready: 'Готово до старту',
+                work: 'Іде робота',
+                rest: 'Іде відпочинок',
+                paused: 'Пауза',
+                workTitle: '💪 РОБОТА',
+                restTitle: '☕ ВІДПОЧИНОК',
+                countdown: 'ЗВОРОТНІЙ ВІДЛІК',
+                totalTime: 'ЗАГАЛЬНИЙ ЧАС',
+                sessionTotal: 'Загальний час сесії: ',
+                historyEmpty: 'Ще немає завершених раундів',
+                seconds: 'сек',
+                reset: 'Скинути все'
+            },
+            en: {
+                title: 'DuoTick — Timer',
+                ready: 'Ready to start',
+                work: 'Working',
+                rest: 'Resting',
+                paused: 'Paused',
+                workTitle: '💪 WORK',
+                restTitle: '☕ REST',
+                countdown: 'COUNTDOWN',
+                totalTime: 'TOTAL TIME',
+                sessionTotal: 'Session total: ',
+                historyEmpty: 'No completed rounds yet',
+                seconds: 'sec',
+                reset: 'Reset all'
+            }
+        };
+        function detectLang() {
+            const saved = localStorage.getItem('dt_lang');
+            if (saved === 'uk' || saved === 'en') return saved;
+            // A Ukrainian or Russian browser gets Ukrainian, every other
+            // one gets English.
+            const code = (navigator.language || '').slice(0, 2).toLowerCase();
+            return code === 'uk' || code === 'ru' ? 'uk' : 'en';
+        }
+        let lang = detectLang();
+        function t(key) { return I18N[lang][key]; }
+        // The status badge text depends on the phase, so the three places
+        // that set it by hand share this helper and a language switch can
+        // re-render it too. kind is 'ready', 'work', 'rest' or 'paused'.
+        function setStatusBadge(kind) {
+            const se = document.getElementById('status');
+            se.innerText = t(kind);
+            const active = kind === 'ready' ? '' : kind === 'paused' ? ' paused' : ' ' + kind + '-active';
+            se.className = 'status-badge' + active;
+        }
+        function currentStatus() {
+            if (state === 'IDLE') return 'ready';
+            if (state === 'PAUSED') return 'paused';
+            return state === 'WORK' ? 'work' : 'rest';
+        }
+        function applyLang() {
+            document.documentElement.lang = lang;
+            document.title = t('title');
+            document.querySelectorAll('[data-i18n]').forEach(function (el) { el.innerText = t(el.dataset.i18n); });
+            setStatusBadge(currentStatus());
+            updateDisplays();
+            renderHistory();
+            renderQuickDurations();
         }
 
         let state = 'IDLE', previousState = 'WORK';
@@ -214,7 +294,7 @@
             document.getElementById('work-total').innerText = formatTime(timers.workTotal);
             document.getElementById('rest-round').innerText = formatTime(timers.restRound);
             document.getElementById('rest-total').innerText = formatTime(timers.restTotal);
-            document.getElementById('sessionTotal').innerText = 'Загальний час сесії: ' + formatTime(timers.workTotal + timers.restTotal);
+            document.getElementById('sessionTotal').innerText = t('sessionTotal') + formatTime(timers.workTotal + timers.restTotal);
             // A round that has not started yet has no plan of its own, so it
             // shows the currently configured duration.
             let wv = (roundDuration.WORK || config.workDuration) - timers.workRound;
@@ -308,7 +388,7 @@
                     btn.addEventListener('click', function() { applyQuickDuration(phase, seconds); });
                     group.appendChild(btn);
                 });
-                if (input) { group.appendChild(input); const s = document.createElement('span'); s.innerText = 'сек'; group.appendChild(s); }
+                if (input) { group.appendChild(input); const s = document.createElement('span'); s.innerText = t('seconds'); group.appendChild(s); }
             });
         }
         function renderHistory() {
@@ -318,7 +398,7 @@
             if (!history.length) {
                 const empty = document.createElement('div');
                 empty.className = 'history-empty';
-                empty.innerText = 'Ще немає завершених раундів';
+                empty.innerText = t('historyEmpty');
                 container.appendChild(empty);
                 return;
             }
@@ -363,15 +443,14 @@
             container.appendChild(grid);
         }
         function handleAction(phase) {
-            playBeep('action'); const se = document.getElementById('status');
+            playBeep('action');
             if (state === 'IDLE') {
                 state = phase;
                 if (phase === 'WORK') timers.workRound = 0; else timers.restRound = 0;
                 // A new round starts, so it takes the currently configured
                 // duration as its plan.
                 roundDuration[phase] = phase === 'WORK' ? config.workDuration : config.restDuration;
-                if (phase === 'WORK') { se.innerText = "Іде робота"; se.className = "status-badge work-active"; }
-                else { se.innerText = "Іде відпочинок"; se.className = "status-badge rest-active"; }
+                setStatusBadge(phase === 'WORK' ? 'work' : 'rest');
                 addQuickDuration(phase, (phase === 'WORK' ? config.workDuration : config.restDuration) / 1000);
                 renderQuickDurations();
                 startTicker();
@@ -384,14 +463,13 @@
                 }
                 // Resuming keeps the plan the round was started with.
                 state = phase;
-                if (phase === 'WORK') { se.innerText = "Іде робота"; se.className = "status-badge work-active"; }
-                else { se.innerText = "Іде відпочинок"; se.className = "status-badge rest-active"; }
+                setStatusBadge(phase === 'WORK' ? 'work' : 'rest');
                 addQuickDuration(phase, (phase === 'WORK' ? config.workDuration : config.restDuration) / 1000);
                 renderQuickDurations();
                 startTicker();
             } else if (phase === state) {
                 playBeep('action'); previousState = state; state = 'PAUSED'; if (intervalId) clearInterval(intervalId);
-                se.innerText = "Пауза"; se.className = "status-badge paused";
+                setStatusBadge('paused');
             } else {
                 // The planned duration is stored with the record, so changing
                 // the configured duration later does not rewrite the history.
@@ -404,8 +482,7 @@
                 currentSignalStep = 0;
                 // The phase that is being switched to starts a new round.
                 roundDuration[phase] = phase === 'WORK' ? config.workDuration : config.restDuration;
-                if (phase === 'WORK') { se.innerText = "Іде робота"; se.className = "status-badge work-active"; }
-                else { se.innerText = "Іде відпочинок"; se.className = "status-badge rest-active"; }
+                setStatusBadge(phase === 'WORK' ? 'work' : 'rest');
                 lastUpdateTime = Date.now();
                 addQuickDuration(phase, (phase === 'WORK' ? config.workDuration : config.restDuration) / 1000);
                 renderQuickDurations();
@@ -420,7 +497,7 @@
             timers = { workTotal: 0, workRound: 0, restTotal: 0, restRound: 0 };
             roundDuration = { WORK: 0, REST: 0 };
             history = [];
-            const se = document.getElementById('status'); se.innerText = "Готово до старту"; se.className = "status-badge";
+            setStatusBadge('ready');
             saveSnapshot();
             renderHistory();
             updateGlow();
@@ -428,14 +505,13 @@
         }
         document.addEventListener("DOMContentLoaded", function() {
             loadSettings();
+            applyLang();
             loadVersion();
             if (!restoreState()) { state = 'IDLE'; previousState = 'WORK'; timers = { workTotal: 0, workRound: 0, restTotal: 0, restRound: 0 }; currentSignalStep = 0; }
             if (state !== 'IDLE') startTicker(lastUpdateTime);
             updateGlow();
             if (state !== 'IDLE') {
-                const se = document.getElementById('status');
-                if (state === 'WORK') { se.innerText = "Іде робота"; se.className = "status-badge work-active"; }
-                else { se.innerText = "Іде відпочинок"; se.className = "status-badge rest-active"; }
+                setStatusBadge(currentStatus());
             }
             updateDisplays();
             renderHistory();
@@ -447,6 +523,17 @@
                 handleAction(card.classList.contains('work') ? 'WORK' : 'REST');
             });
             document.getElementById('resetBtn').addEventListener('click', handleReset);
+            document.querySelectorAll('.lang-btn').forEach(function (btn) {
+                btn.addEventListener('click', function() {
+                    if (btn.dataset.lang === lang) return;
+                    // An explicit switch is remembered; the initial choice
+                    // keeps following the browser until the user picks one
+                    // here.
+                    lang = btn.dataset.lang;
+                    localStorage.setItem('dt_lang', lang);
+                    applyLang();
+                });
+            });
             document.getElementById('workDurationInput').addEventListener('input', saveSettings);
             document.getElementById('restDurationInput').addEventListener('input', saveSettings);
             document.addEventListener('visibilitychange', function() { if (document.visibilityState === 'hidden') saveSnapshot(); });
