@@ -162,3 +162,7 @@ To check that the service worker and the inline script parse cleanly:
 ```bash
 node --check sw.js
 ```
+
+## License
+
+MIT — see [LICENSE](LICENSE).
