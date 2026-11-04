@@ -33,7 +33,7 @@ jobs:
       - name: Upload the site
         uses: actions/upload-pages-artifact@v5
         with:
-          # The app is the whole repository. The .tmp folder is not tracked
+          # The app is the whole repository. The .dev folder is not tracked
           # and the .git folder is never uploaded, so this is the site as it
           # is served.
           path: '.'
