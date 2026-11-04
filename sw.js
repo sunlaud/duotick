@@ -1,9 +1,9 @@
-const CACHE_NAME = 'sport-clock-v5';
+const CACHE_NAME = 'duotick-v6';
 
 const PRECACHE = [
   './',
   './index.html',
-  './sport-clock-manifest.json',
+  './duotick-manifest.json',
   './icon-192.png',
   './icon-512.png',
   './icon-512-maskable.png'

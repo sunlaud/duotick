@@ -3,18 +3,18 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Таймер та Секундомір</title>
-    <link rel="manifest" href="sport-clock-manifest.json">
+    <title>DuoTick — Таймер та Секундомір</title>
+    <link rel="manifest" href="duotick-manifest.json">
     <link rel="icon" href="icon-192.png">
     <link rel="apple-touch-icon" href="icon-192.png">
     <meta name="theme-color" content="#121212">
     <meta name="mobile-web-app-capable" content="yes">
     <meta name="apple-mobile-web-app-capable" content="yes">
     <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
-    <meta name="apple-mobile-web-app-title" content="Sport Clock">
-    <meta name="description" content="Таймер та секундомір для роботи та відпочинку">
-    <meta property="og:title" content="Sport Clock">
-    <meta property="og:description" content="Таймер та секундомір для роботи та відпочинку">
+    <meta name="apple-mobile-web-app-title" content="DuoTick">
+    <meta name="description" content="Два лічильники, що чергуються. Рахують вгору, нічого не перемикають самі.">
+    <meta property="og:title" content="DuoTick">
+    <meta property="og:description" content="Два лічильники, що чергуються. Рахують вгору, нічого не перемикають самі.">
     <meta property="og:type" content="website">
     <meta property="og:image" content="icon-512.png">
     <meta name="twitter:card" content="summary">
@@ -146,7 +146,7 @@
         let appVersion = '';
 
         function loadVersion() {
-            return fetch('sport-clock-manifest.json', { cache: 'no-cache' })
+            return fetch('duotick-manifest.json', { cache: 'no-cache' })
                 .then(function (response) { return response.json(); })
                 .then(function (manifest) {
                     appVersion = manifest.version || '';
@@ -170,22 +170,22 @@
         // for a round that is already under way.
         let roundDuration = { WORK: 0, REST: 0 };
         function loadSettings() {
-            const w = localStorage.getItem('sw_w'), r = localStorage.getItem('sw_r');
+            const w = localStorage.getItem('dt_w'), r = localStorage.getItem('dt_r');
             if (w) { document.getElementById('workDurationInput').value = w; config.workDuration = parseInt(w) * 1000; }
             if (r) { document.getElementById('restDurationInput').value = r; config.restDuration = parseInt(r) * 1000; }
         }
         function saveSettings() {
             const w = document.getElementById('workDurationInput').value, r = document.getElementById('restDurationInput').value;
-            localStorage.setItem('sw_w', w); localStorage.setItem('sw_r', r);
+            localStorage.setItem('dt_w', w); localStorage.setItem('dt_r', r);
             config.workDuration = (parseInt(w) || 45) * 1000; config.restDuration = (parseInt(r) || 60) * 1000;
             if (state === 'IDLE') updateDisplays();
         }
         function saveSnapshot() {
-            try { localStorage.setItem('sw_state', JSON.stringify({ state: state, previousState: previousState, timers: timers, currentSignalStep: currentSignalStep, lastUpdateTime: lastUpdateTime, history: history, quickDurations: quickDurations, roundDuration: roundDuration })); } catch (e) { /* storage full/blocked */ }
+            try { localStorage.setItem('dt_state', JSON.stringify({ state: state, previousState: previousState, timers: timers, currentSignalStep: currentSignalStep, lastUpdateTime: lastUpdateTime, history: history, quickDurations: quickDurations, roundDuration: roundDuration })); } catch (e) { /* storage full/blocked */ }
         }
         function restoreState() {
             try {
-                const s = JSON.parse(localStorage.getItem('sw_state'));
+                const s = JSON.parse(localStorage.getItem('dt_state'));
                 if (s && (s.state === 'WORK' || s.state === 'REST' || s.state === 'PAUSED')) {
                     state = s.state; previousState = s.previousState || 'WORK'; timers = s.timers || { workTotal: 0, workRound: 0, restTotal: 0, restRound: 0 }; currentSignalStep = s.currentSignalStep || 0; lastUpdateTime = s.lastUpdateTime || Date.now(); history = s.history || []; quickDurations = s.quickDurations || { WORK: [45, 60, 120], REST: [45, 60, 120] };
                     // The plan of a round that is under way survives a reload.

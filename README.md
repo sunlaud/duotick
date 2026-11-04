@@ -1,16 +1,19 @@
-# Sport Clock
+# DuoTick
 
-A work/rest interval timer for gym use, served as a static web app.
+Two alternating timers for work and rest, served as a static web app.
 
-Two timers — **WORK** and **REST** — run side by side. Each shows its
-current round time, a countdown to the end of the round, and the total
-time accumulated in that phase. The app is a single page with no build
-step and no dependencies, so it can be hosted by any static file server.
+The two timers — **WORK** and **REST** — run side by side, but only one of
+them runs at a time. Each counts **up**: the number on the card is the time
+elapsed in the current round, and a countdown underneath it only tells you
+that the time is up. Nothing switches by itself; you decide when the phase
+changes, so the routine stays flexible. The app is a single page with no
+build step and no dependencies, so it can be hosted by any static file
+server.
 
 ## Features
 
-- Separate work and rest timers with independent durations
-- Countdown per round plus a running total per phase
+- Two alternating timers — work and rest — with independent durations
+- The active timer counts up; the countdown only informs
 - Audio cues: a short beep on every action, two high beeps in the last
   two seconds of a round, and a longer low beep when the round ends
 - Session total across both phases
@@ -42,7 +45,7 @@ duration is kept and the list holds the three most recent values.
 ```
 index.html               the app: markup, styles and logic in one file
 sw.js                    service worker (offline support, update handling)
-sport-clock-manifest.json  PWA manifest
+duotick-manifest.json    PWA manifest
 icon-192.png             app icons
 icon-512.png
 icon-512-maskable.png
@@ -55,7 +58,7 @@ resolves to.
 ## Version
 
 The version is shown in the footer of the app. It is defined once, as
-`version` in `sport-clock-manifest.json`, and should be bumped on any
+`version` in `duotick-manifest.json`, and should be bumped on any
 change to the app. The page reads it from the manifest.
 
 ## Deployment
@@ -96,16 +99,17 @@ can live as a sibling of other static apps:
 
 ```
 static-apps/
-  sport-clock/     <- this app
-  other-app/       <- another app
+  duotick/       <- this app
+  other-app/     <- another app
 ```
 
 ### Service worker and updates
 
 The service worker fetches the app shell (`index.html` and the directory
 index) from the network first and only falls back to the cache when
-offline. Icons and the manifest are served from the cache first, since
-they do not change between releases.
+offline. The icons are served from the cache first, since they do not
+change between releases. The manifest is fetched from the network as
+well, because the page reads the version from it.
 
 **No manual step is needed to push a new version to clients.** The worker
 compares the copy of `index.html` on the server with the one in the cache

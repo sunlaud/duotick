@@ -1,7 +1,8 @@
 {
-  "name": "Sport Clock",
-  "short_name": "Sport Clock",
-  "version": "1.1.0",
+  "name": "DuoTick",
+  "short_name": "DuoTick",
+  "description": "Two alternating count-up timers. Nothing switches by itself.",
+  "version": "1.2.0",
   "start_url": "./",
   "scope": "./",
   "display": "standalone",
